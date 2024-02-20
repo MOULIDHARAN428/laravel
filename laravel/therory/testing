@@ -1,0 +1,337 @@
+To test the php file
+
+phpunit
+
+No session or cache data will be persisted while testing.
+
+php artisan make:test UserTest
+
+1.  Application Testing
+    
+    class ExampleTest extends TestCase
+    {
+        public function testBasicExample()
+        {
+            $this->visit('/')
+                ->see('Laravel 5')
+                ->dontSee('Rails'); //the resp will be sent
+        }
+    }
+
+    It will execute the GET req into the application
+    see     : the page should contains
+    dontsee : the page shouldn't contains
+
+    To vist routes we can do it by
+    $this->visitRoute('profile');
+    $this->visitRoute('profile', ['user' => 1]);
+
+    <a href="/about-us">About Us</a>
+
+    public function testBasicExample()
+    {
+        $this->visit('/')
+            ->click('About Us')
+            ->seePageIs('/about-us');
+    }
+
+    to check the user has arrived at the correct named route
+    ->seeRouteIs('profile', ['user' => 1]);
+
+    **Interacting with forms**
+
+    for this form
+    <form action="/register" method="POST">
+        {{ csrf_field() }}
+    
+        <div>
+            Name: <input type="text" name="name">
+        </div>
+    
+        <div>
+            <input type="checkbox" value="yes" name="terms"> Accept Terms
+        </div>
+    
+        <div>
+            <input type="submit" value="Register">
+        </div>
+    </form>
+
+    test to inspect the form
+
+    public function testNewUserRegistration()
+    {
+        $this->visit('/register')
+            ->type('Taylor', 'name')
+            ->check('terms')
+            ->press('Register')
+            ->seePageIs('/dashboard');
+    }
+
+    $this->type($text, $elementName) 	        "Type" text into a given field.
+    $this->select($value, $elementName) 	    "Select" a radio button or drop-down field.
+    $this->check($elementName) 	                "Check" a checkbox field.
+    $this->uncheck($elementName) 	            "Uncheck" a checkbox field.
+    $this->attach($pathToFile, $elementName) 	"Attach" a file to the form.
+    $this->press($buttonTextOrElementName) 	    "Press" a button with the given text or name.
+
+    File input
+    
+    public function testPhotoCanBeUploaded()
+    {
+        $this->visit('/upload')
+            ->attach($pathToFile, 'photo')
+            ->press('Upload')
+            ->see('Upload Successful!');
+    }
+
+    class ExampleTest extends TestCase
+    {
+        public function testBasicExample()
+        {
+            $this->json('POST', '/user', ['name' => 'Sally'])
+                ->seeJson([
+                    'created' => true,
+                ]);
+        }
+    }
+
+    seeJson : converts array into JSON
+
+    verify exact match
+    
+    public function testBasicExample()
+    {
+        $this->json('POST', '/user', ['name' => 'Sally'])
+             ->seeJsonEquals([
+                 'created' => true,
+             ]);
+    }
+
+    verify structure match
+    seeJsonStrucutre will not fail if we have additional attribute
+    
+    public function testBasicExample()
+    {
+        $this->get('/user/1')
+             ->seeJsonStructure([
+                 'name',
+                 'pet' => [
+                     'name', 'age'
+                 ]
+             ]);
+    }
+
+    public function testBasicExample()
+    {
+        // Assert that each user in the list has at least an id, name and email attribute.
+        $this->get('/users')
+             ->seeJsonStructure([
+                 '*' => [
+                     'id', 'name', 'email'
+                 ]
+             ]);
+    }
+
+    ->seeJsonStructure([
+    '*' => [
+        'id', 'name', 'email', 'pets' => [
+            '*' => [
+                'name', 'age'
+            ]
+        ]
+         ]
+    ]);
+
+    Session
+
+    public function testApplication()
+    {
+        $this->withSession(['foo' => 'bar'])
+             ->visit('/');
+    }
+
+    class ExampleTest extends TestCase
+    {
+        public function testApplication()
+        {
+            $user = factory(App\User::class)->create();
+    
+            $this->actingAs($user)
+                ->withSession(['foo' => 'bar'])
+                ->visit('/')
+                ->see('Hello, '.$user->name);
+        }
+    }
+
+    second arg : guard name
+    $this->actingAs($user, 'api')
+
+    Disabling Middleware : makes testing convenient when we disable middleware
+
+    class ExampleTest extends TestCase
+    {
+        use WithoutMiddleware;
+    }
+
+    Disabling middleware for specific methods
+    
+    class ExampleTest extends TestCase
+    {
+        public function testBasicExample()
+        {
+            $this->withoutMiddleware();
+    
+            $this->visit('/')
+                ->see('Laravel 5');
+        }
+    }
+
+    call the application and get the response
+
+    public function testApplication()
+    {
+        $response = $this->call('GET', '/');
+    
+        $this->assertEquals(200, $response->status());
+    }
+
+    $response = $this->call('POST', '/user', ['name' => 'Taylor']);
+
+    ->assertResponseOk();
+    ->assertResponseStatus($code);
+    ->assertViewHas($key, $value = null);
+    ->assertViewHasAll(array $bindings);
+    ->assertViewMissing($key);
+    ->assertRedirectedTo($uri, $with = []);
+    ->assertRedirectedToRoute($name, $parameters = [], $with = []);
+    ->assertRedirectedToAction($name, $parameters = [], $with = []);
+    ->assertSessionHas($key, $value = null);
+    ->assertSessionHasAll(array $bindings);
+    ->assertSessionHasErrors($bindings = [], $format = null);
+    ->assertHasOldInput();
+    ->assertSessionMissing($key);
+
+2.  Database Testing
+
+    public function testDatabase()
+    {
+        $this->seeInDatabase('users', [
+            'email' => 'sally@example.com'
+        ]);
+    }
+
+    Resetting The Database After Each Test
+
+    It is often useful to reset your database after each test so that data from a previous test does not interfere with subsequent tests. One approach to resetting the database state is to rollback the database after each test and migrate it before the next test.
+
+    use Illuminate\Foundation\Testing\WithoutMiddleware;
+    use Illuminate\Foundation\Testing\DatabaseMigrations;
+    use Illuminate\Foundation\Testing\DatabaseTransactions;
+    
+    class ExampleTest extends TestCase
+    {
+        use DatabaseMigrations;
+        public function testBasicExample()
+        {
+            $this->visit('/')
+                ->see('Laravel 5');
+        }
+    }
+
+    class ExampleTest extends TestCase
+    {
+        use DatabaseTransactions;
+        public function testBasicExample()
+        {
+            $this->visit('/')
+                ->see('Laravel 5');
+        }
+    }
+
+    We need to test by inserting the values, instead of manually inserting using Faker php library
+    $factory->define(App\User::class, function (Faker\Generator $faker) {
+        static $password; 
+        return [
+            'name' => $faker->name,
+            'email' => $faker->unique()->safeEmail,
+            'password' => $password ?: $password = bcrypt('secret'),
+            'remember_token' => str_random(10),
+        ];
+    });
+
+3.  Mocking
+    during testing we need to mock some aspects of applications so that they are not executed during given test
+    if you are testing user registration, you probably do not want all of a UserRegistered event's handlers firing, since the listeners may send "welcome" e-mails, etc.
+    
+    public function testUserRegistration()
+    {
+        $this->expectsEvents(UserRegistered::class);
+ 
+        // Test user registration...
+    }
+
+    public function testOrderShipping()
+    {
+        $this->expectsEvents(OrderShipped::class);
+        $this->doesntExpectEvents(OrderFailedToShip::class);
+ 
+        // Test order shipping...
+    }
+
+    to prevent all event listeners from running, you may use the withoutEvents method
+    class ExampleTest extends TestCase
+    {
+        public function testUserRegistration()
+        {
+            $this->withoutEvents();
+        }
+    }
+
+    Jobs
+    
+    use App\Jobs\ShipOrder;
+ 
+    class ExampleTest extends TestCase
+    {
+        public function testOrderShipping()
+        {
+            $this->expectsJobs(ShipOrder::class);
+    
+            // Test order shipping...
+        }
+    }
+
+    class ExampleTest extends TestCase
+    {
+        public function testOrderCancellation()
+        {
+            $this->doesntExpectJobs(ShipOrder::class);
+    
+            // Test order cancellation...
+        }
+    }
+
+    public function testOrderCancellation()
+    {
+        $this->withoutJobs();
+ 
+        // Test order cancellation...
+    }
+
+    Cache
+
+    class FooTest extends TestCase
+    {
+        public function testGetIndex()
+        {
+            Cache::shouldReceive('get')
+                        ->once()
+                        ->with('key')
+                        ->andReturn('value');
+    
+            $this->visit('/users')->see('value');
+        }
+    }
+
+    

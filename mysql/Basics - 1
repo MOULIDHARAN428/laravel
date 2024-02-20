@@ -1,0 +1,153 @@
+create database demo;
+show databases;
+use demo;
+show tables;
+
+# variables
+set @name:="moya";
+select @name;
+
+# <> : not equal
+
+# data type -> tinyhint,shortint,longint,int,varchar,float(),double()
+# constraints NOT NULL,CHECK,DEFAULT,PRIMARY KEY,AUTO_INCREMENT,UNIQUE,INDEX,ENUM,FOREIGN KEY
+# check (salary >= 0)
+# keys -> primary, foregin, unique, composite key
+# composite key -> primary key (col1, col2)
+# unique key -> unique(col)
+
+# ddl
+
+# alter
+create table details(
+	id int primary key auto_increment,
+  name varchar(20) not null,
+  age int,
+  today_date date
+);
+describe details;
+
+alter table details add temp int(10) default 5; #add new col, use comma and col details to add more cols
+alter table detail rename to details; #rename table
+alter table details change column temp tep int(10); # rename col
+alter table details drop column tep; #drop col
+show columns from details;
+drop table details;
+truncate table details;
+
+# dml
+select * from details;
+insert into details value (1,"a",1,"2004-12-31"),(2,"b",2,"2006-10-20");
+update details set name="c" where age=2;
+delete from details where name="c";
+replace into details(id,name) values(1,"z");
+# insert ignore ... -> remove invalid rows
+# insert into table select * from table2 where [conditions]
+
+
+# dql
+select * from details;
+
+# JOIN: inner join, left join, right join, cross join, self join, delete join, update join, equijoin, natural join
+# cartesian product : select col1.col2 from table1, table2
+# select a.name from a inner join  on a.id=b.id where [conditions]
+# self join : with itself
+# delete join : delete col from table join on table1 where table.id=table1.id 
+# upadate join : update col from table join on table1 where table.id=table1.id set table.col=value
+# equi join : where table.id = table1.id
+# inner join, left outer join, right outer join, 
+
+# non equi join : where table.id >= table1.id
+# natural join : works on the comman factor by itself
+
+# fuctions
+# important : group by ("") having [conditions] order by ("");
+# as -> select col as name from table
+# distinct -> select distinct col from table
+# limit,offset,order by -> DELETE FROM Employees ORDER BY name [asc|desc] offset 2 LIMIT 3;
+# group by -> DELETE FROM Employees group BY name;
+
+# and, or, not
+# top -> top select top [number| number percent] from table where condition
+# fetch -> select * from table fetch [first|last] [number| number percent] rows only
+# like -> select * from table where name like '%a%'
+# wildcard characters -> % [0,] _ [1] , [abc]% : any word starts with a,b,c, [!a-f][a-f]^ : apart from a to f 
+
+# in -> select * from table where name in ('a','b');
+# between -> select * from table where age between 1 and 5;
+# name -> select name as [Name] from table; Name appears in bold letter
+# union, intersect, except -> select col1 from t1 [intersect | union | except] col2 from t2
+# any, all -> select * from table where col = any|all (select * from table1 where condition)
+# any, all -> select option works any : if any tuple satisfies, all : if all tuple satisfies for the condition of table1
+# into -> select * into newtable from oldtable where condition
+
+# aggregate funciton
+# count,sum,max,min,avg,first,last
+# select first(col) | last(col) from table, returns first and last col alone
+
+#tcl
+# savepoint sp1 
+# rollback to sp1
+# release savepoint sp1 : remove savepoints
+
+#extra
+# replace(string,from,to)
+
+#date and time
+select now();
+select curdate();
+select curtime();
+select date('2002-12-30 12:59:40'); -> date, dayname, dayofmonth, dayofweek, dayofyear, weekofyear;
+year(date)
+
+#string
+select reverse("mouli");
+char_length(str), length(str), concat('a','b','c'), lcase('A'), ucase('a'), upper(str)
+lower(str), repeat(str,times), replace(str,from,to), reverse(str), right(str,len), 
+strcmp(str1,str2), substring(str,from,to)
+
+#view
+[create | create or replace] view name as select col from table where condition;
+
+#procedure : have input, output parameter ; 
+
+# DELIMITER && mot needed in beekeeper
+
+CREATE PROCEDURE pro_name(IN a INT)
+BEGIN
+    DECLARE temp, temp1 INT;
+    SELECT a;
+END;
+# END &&
+# DELIMITER not needed in beekeeper
+ 
+call pro_name(11);
+
+# funciton : always return a value
+
+# delimiter &&
+create function func_name(val int) returns int
+deterministic
+begin
+	return val;
+end;
+select func_name(11);	
+
+# end &&
+# delimiter
+
+# triggers : need delimiter
+create trigger name
+before|after update|delete|insert on table_name
+for each row begin
+begin
+//statement
+end
+
+# cursors : stores the temp variable 
+DECLARE cursor_name CURSOR 
+FOR SELECT column1, column2 FROM your_table;
+OPEN cursor_name;
+FETCH cursor_name INTO variable1, variable2;
+CLOSE cursor_name;
+

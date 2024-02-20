@@ -1,0 +1,141 @@
+Routes are written in  routes/web.php
+
+Route::[get|put|post|delete|patch|options]('{end-point}', function () {
+    return 'Hello World'; {'STATEMENT'}
+});
+
+end-point is Known as **URI** {Uniform Resource Identifier}
+
+Route::get('/user', [UserController::class, 'index']);
+-> the info is get from the index file,{ index is method }
+-> controller and method that will handle the incoming request when the specified route is accessed
+
+1. Starter : Single HTTP methods
+   Route::get('/home', function () {
+      return "hiiii";
+   });
+
+2. Match : Multiple HTTP methods
+   Route::match(['get', 'post'], '/there', function () {
+      return "heyy!!!";
+   });
+
+3. Any
+   Route::any('/there', function () {
+      return "super";
+   });
+
+4. CSRF : Cross-Site Request Forgeries blocks the edit from the unauthorized user,generated CSRF tokens for the active session
+   Route::get('/token', function (Request $request) {
+      $token = $request->session()->token();
+   
+      $token = csrf_token(); //generated the csrf tokens
+   
+      // ...
+   });
+
+5. Redirect
+   Route::redirect('/here', '/there'); // 302 : temporarily moved
+   Route::redirect('/here', '/there', 301);
+   Route::permanentRedirect('/here', '/there');
+
+6. View : If we need to return only view, sends the HTML files in the form of views
+   Route::view('/welcome', 'welcome');
+
+7. Paramters : 
+   Route::get('/user/{id}', function (string $id) {
+      return 'User '.$id;
+   });
+
+   Optional Parameter :
+   Route::get('/user/{name?}', function (?string $name = 'John') {
+      return $name;
+   });
+
+   Regex or Constrained Parameter :
+   Route::get('/user/{name}', function (string $name) {
+      // ...
+   })->where('name', '[A-Za-z]+');
+
+   Global Constraints : Alternative to the regex parameter
+   Need to declare regex in the boot method of 'App\Providers\RouteServiceProvider'
+   
+   public function boot(): void
+   {
+      Route::pattern('id', '[0-9]+');
+   }
+   So, Route::get('/user/{id}', function (string $id) {}); accepts the id of the type number only
+
+8. Route names : this route is named as profile
+   Route::get('/user/profile', function () {
+      // ...
+   })->name('profile');
+   can be accessed by route('profile')
+
+9. Accessing the current routes
+   $route = Route::current(); // Illuminate\Routing\Route
+   $name = Route::currentRouteName(); // string
+   $action = Route::currentRouteAction(); // string
+
+1. Rate Limiters -> Limits the traffic of the site
+   RateLimiter::for('global', function (Request $request) {
+      return Limit::perMinute(1000);
+   }); //declared in the boot of RouteServiceProvider, 1000 people can only use the site
+   
+   RateLimiter::for('global', function (Request $request) {
+      return Limit::perMinute(1000)->response(function (Request $request, array $headers) {
+         return response('Custom response...', 429, $headers);
+      });
+   }); //handling the traffic overflow with 429 code, triggers when the traffic exceeds the 1000 times by an user
+
+   RateLimiter::for('uploads', function (Request $request) {
+      return $request->user()
+                  ? Limit::perMinute(100)->by($request->user()->id)
+                  : Limit::perMinute(10)->by($request->ip());
+   }); // 100 req per min for the user with id and 10 req for the user with ip
+
+   Throttle is used to have the rate limiter attached to the gropus : used in the middleware
+2. Prefix Routes
+   Route::prefix('admin')->group(function () {
+      Route::get('/users', function () {
+         // Matches The **/admin/users** URL
+      });
+   });
+   Prefix Name Routes
+   Route::name('admin.')->group(function () {
+      Route::get('/users', function () {
+         // Route assigned name **admin.users**
+      })->name('users');
+   });
+
+3. Implicit Binding : when the parameterized URI were used, the data from the DB automatically inject by the laravel
+   Instead of passing the userID, we need to pass the entire user
+    
+   // Route definition...
+   Route::get('/users/{user}', [UserController::class, 'show']);
+   
+   // Controller method definition...
+   public function show(User $user)
+   {
+      return view('user.profile', ['user' => $user]);
+   }
+
+   However it can't retrieve soft deleted models, but can bw retrieved by the use of **withTrashed** method
+   Route::get('/users/{user}', function (User $user) {
+      return $user->email;
+   })->withTrashed();
+
+
+   Route::get('/users/{user}/posts/{post:slug}', function (User $user, Post $post) {
+      return $post;
+   }); // Laravel will return the post of the the user itself without any additional codes, {user} should be the parent of the {post}
+
+4. Fallback : Triggers when no routes matching the incoming reqs
+   Route::fallback(function () {
+      // ...
+   });
+
+
+
+php artisan route:list  => to know the URI, middleware, methods of the route
+php artisan route:clear => to clear the cache files of the route

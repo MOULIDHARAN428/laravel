@@ -1,0 +1,70 @@
+#task which are not completed
+select * from task where time_completed is null;
+
+#task which are completed
+select * from task where time_completed is not null;
+
+#urgent task not completed
+select * from task where urgency = 1 and time_completed is null;
+
+#urgent task completed
+select * from task where urgency = 1 and time_completed is not null;
+
+
+#employee with no task
+select e.name from employee e where e.id not in (select emp_id from task_mapping);
+
+#employee who completed the task
+select e.name from employee e, task_mapping m where e.id = m.emp_id and m.time_completed is not null;
+
+#employee who not completed the task
+select e.name from employee e, task_mapping m where e.id = m.emp_id and m.time_completed is null;
+
+#people in technical department
+select e.name from employee e where team_id in( 
+select team.id from team where team.dept_id in (
+select department.id from department where department.name="technical"
+ ));
+
+#employee who havn't completed the urgent work
+select e.name from employee e where e.id in(
+select m.emp_id from task_mapping m where m.task_id in 
+(select t.id from task t where t.urgency = 1 and t.time_completed is null));
+
+select e.name from employee e, task_mapping m where e.id = m.emp_id and m.time_completed is null;
+
+#task completed before
+select * from task where time_completed < "2024-01-10 00:00:00";
+
+#task completed after
+
+select * from task where time_completed > "2024-01-10 00:00:00" or time_completed is null;
+
+#task completed in between
+select * from task where time_completed between "2024-01-01 00:00:00" and "2024-01-15 00:00:00";
+
+#count of task assign for technical team
+select count(*) from task_mapping where task_mapping.emp_id in(
+select employee.id from employee where employee.team_id in(
+(select team.id from team where team.dept_id in
+(select department.id from department where department.name = "technical"))));
+
+#department name to which task 9 is assigned
+select department.name from department where department.id in(
+select team.dept_id from team where team.id in( 
+select employee.team_id from employee where employee.id in(
+select task_mapping.emp_id from task_mapping where task_mapping.task_id = "9")));
+
+#hour taken to complete the work -> ~0.01s
+select hour(timediff(time_completed_at, time_assigned_at)) from task;
+
+#hour taken to complete the work -> ~0.01s
+select hour(task.time_completed_at) - hour(task.time_assigned_at)+ 
+((day(task.time_completed_at) - day(task.time_assigned_at)) * 24)+
+((month(task.time_completed_at) - month(task.time_assigned_at)) * 720)+
+((year(task.time_completed_at) - year(task.time_assigned_at)) * 262800)
+from task;
+
+select monthname(task.time_assigned_at) as month, count(*) as count_ 
+from task group by monthname(task.time_assigned_at) having count_>1 order by count_;
+

@@ -1,0 +1,59 @@
+cd
+cd ..
+~ -> home dir
+ls
+dir
+mkdir
+mv
+cp
+rm
+rmdir
+cat
+echo
+wc -> word count
+wc -l
+a > b : writing content a in b
+a >> b : appending the content a in b
+less -> to view large data
+a | b : output of a feed as an input to b
+uniq -> filter out adjacent duplicate lines from a sorted file
+uniq should be used with sort to remove all duplicates
+sort -> sort the lines of text
+
+sudo apt -> for installing any packages : react, npm
+sudo -> for accessing the root(super) informations
+use of sudo requires the root password
+
+. in the front of file for hidding those
+
+ping [ip]
+
+
+**VI**
+
+vi filename : creates file if not exist, or opens new file
+view filename : open in read mode
+
+i : for editing the text files
+after editing done, press esc followed by the below commands
+
+surity message :  editor will warn you of this, and not let you quit
+:q exit without saving, there will be the surity message (quit)
+:q! exit without saving, no surity message
+:w exit with saving, there will be the surity message
+:wq exit with saving, no surity message
+zz and :wq works like same
+
+insert : i I a A o O
+delete : x X D dd
+
+nano : used for read, write
+
+**SSH**
+
+used to login to the remote server securely
+key based auth : more secure and convenient
+private - never shared and kept secrete
+public key - can be share with other servers
+
+

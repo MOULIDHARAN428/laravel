@@ -1,0 +1,70 @@
+URL
+
+// echo url("/posts/{$post->id}");
+ 
+// http://example.com/posts/1
+
+// echo route('post.show', ['post' => 1]);
+ 
+// http://example.com/post/1
+
+// echo route('comment.show', ['post' => 1, 'comment' => 3]);
+ 
+// http://example.com/post/1/comment/3
+
+// echo route('post.show', ['post' => 1, 'search' => 'rocket']);
+ 
+// http://example.com/post/1?search=rocket
+
+// URL for controllers
+
+// $url = action([UserController::class, 'profile'], ['id' => 1]);
+
+// Signed 
+
+// Route::get('/secret', 'SecretController@show')->name('secret');
+// http://your-app.com/secret?signature=xyz123...
+
+// return URL::signedRoute('unsubscribe', ['user' => 1]);
+// return URL::signedRoute('unsubscribe', ['user' => 1], absolute: false); // to exclude the domaain
+
+// To check the validity of the route
+
+//if the signature is invalid it will abort
+// Route::get('/unsubscribe/{user}', function (Request $request) {
+//     if (! $request->hasValidSignature()) {
+//         abort(401);
+//     }
+// })->name('unsubscribe');
+
+
+// Encoding the URL
+use Illuminate\Support\Facades\Crypt;
+
+public function generateEncodedUrl()
+{
+    $dataToHide = ['user_id' => 123, 'action' => 'activate'];
+    $encryptedData = encrypt($dataToHide);
+    $url = route('example.route', ['encrypted_data' => $encryptedData]);
+    return redirect($url);
+}
+
+// Decoding the URL
+use Illuminate\Support\Facades\Crypt;
+
+public function exampleMethod($encryptedData)
+{
+    // Decrypt the data
+    $decodedData = decrypt($encryptedData);
+    
+    // Now, $decodedData contains the original data
+    // You can use it as needed
+    
+    // Example: Accessing user_id
+    $userId = $decodedData['user_id'];
+
+    // Example: Accessing action
+    $action = $decodedData['action'];
+
+    // Rest of your logic...
+}

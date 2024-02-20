@@ -1,0 +1,276 @@
+Request : will have input, cookies and files and more
+
+Laravel has middlewares that will process the req by trimmingStrings and converting the value to null if it is empty
+
+// In laravel when we handling HTTP req, the req will be automatically injects to the controller
+
+use Illuminate\Http\Request;
+// should use on the controller method and routes
+
+
+ /**** REPRESENTION OF REQUEST *****/
+    POST /api/tasks?category=work HTTP/1.1
+    Host: api.example.com
+    Authorization: Bearer your-access-token
+    Content-Type: application/json
+    Accept: application/json
+    User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0
+    Cookie: session_id=abc123; user_preferences=dark_mode
+    Cache-Control: no-cache
+    {
+    "title": "New Task",
+    "description": "Work on important project",
+    "due_date": "2023-02-28"
+    }
+ 
+
+1.  class UserController extends Controller
+    {
+        public function store(Request $request): RedirectResponse
+        {
+            $name = $request->input('name');
+            return redirect('/users');
+        }
+    }
+
+    //Should inject the requests to the controller
+    Route::get('/', function (Request $request) {
+        // ...
+    });
+
+2.  Route::put('/user/{id}', [UserController::class, 'update']);
+    
+    class UserController extends Controller
+    {
+        public function update(Request $request, string $id): RedirectResponse
+        {
+            return redirect('/users');
+        }
+    }
+
+3.  Functions
+
+    Request Path : Returns the path or the endpoints
+    $uri = $request->path();
+    for "http://example.com/foo/bar" it will return "foo/bar"
+
+    ROUTER MATCHING
+    is : to ensure that the path is matching the pattern
+    // $request->is('admin/*')
+    // $request->routeIs('admin.*') for named routes
+    
+    URL
+    // $request->url();
+    // $request->fullUrl();
+
+    HOST
+    // $request->host();
+    // $request->httpHost();
+    // $request->schemeAndHttpHost();
+
+    METHOF
+    // $request->method()
+    // $request->isMethod('post')
+
+    HEADER
+    Returns the value of the header : X-Header-Name
+    // $value = $request->header('X-Header-Name'); 
+    Returns the value of the header if presents else return the default value
+    // $value = $request->header('X-Header-Name', 'default');
+
+    // $request->hasHeader('X-Header-Name') returns boolean if exits
+
+    IP
+    // $ipAddress = $request->ip();
+
+    CONTENT NEGOTIATION
+    // $request->accepts(['text/html', 'application/json']
+    // return true if any of the content types are accepted by the req
+
+    // $request->prefers(['text/html', 'application/json']);
+    // $request->expectsJson()
+
+    PSR-7 REQUESTS : interface for the req and resp of the HTTP messages
+
+    // Laravel uses the Symfony HTTP Message Bridge component to convert typical Laravel requests and responses 
+    // into PSR-7 compatible implementations
+    
+    // For PSR-7 representation
+    use Psr\Http\Message\ServerRequestInterface;
+ 
+    Route::get('/', function (ServerRequestInterface $request) {
+        // ...
+    });
+
+3.  INPUTS
+
+    $input = $request->all(); // retrieve all input data
+
+    $input = $request->collect(); // array of input data
+    
+    $request->collect('users')->each(function (string $user) {
+        // ...
+    }); // for each collections
+
+    $name = $request->input('name'); 
+    $name = $request->input('name', 'Sally'); // with default sally value
+
+    // $name = $request->input('products.0.name'); return products[0].names 
+
+    $input = $request->input(); // to retrieve all input values
+
+    Query
+    // http://example.com/search?name=John&age=25
+    // query : {name : John, age : 25}
+
+    $name = $request->query('name'); // get the value of the name
+    $name = $request->query('name', 'Helen'); // default name Helen
+    $query = $request->query(); // to get all the query
+
+    // retrieve json inputs
+    // Content-Type should be assigned as application/json
+    // $name = $request->input('user.name'); user[names]
+
+    Boolean
+    $archived = $request->boolean('archived');
+    //for 1, "1", true, "true", "on", and "yes" it will return true, and false for the remaining
+
+    Date
+    $birthday = $request->date('birthday');
+    // $elapsed = $request->date('elapsed', '!H:i', 'Europe/Madrid');
+    // Hour : Minutes format of the Europe/Madrid time
+
+    Dyanmic Properties
+    //if the form contains any fields called name, you can access it by using the below code
+    $name = $request->name;
+
+    Enum Values
+    //if status enum not found it will return null values
+    $status = $request->enum('status', Status::class);
+
+    Portion of Input
+    $input = $request->only('username', 'password');
+    $input = $request->except(['credit_card']);
+
+4.  INPUT PRESENCE
+    $request->has('name');
+    $request->has(['name', 'email']);
+    $request->hasAny(['name', 'email'])
+
+    Single Closure
+    $request->whenHas('value', function (string $input) {
+        // ...
+    }); // the closure is execute when the value present on the request
+
+    Double Closure : the second func will execute when the value presents in req
+    $request->whenHas('value', function (string $input) {
+        // The "name" value is present...
+    }, function () {
+        // The "name" value is not present...
+    });
+
+    $request->filled('name'); //returns false if it is empty or true if it contains any value
+    $request->anyFilled(['name', 'email']) // if any of the constraints is not null
+    //can have for single and double closure
+
+    Merge -> to add some info with the req; if the value exits, it will be overwritten
+
+    $request->merge(['votes' => 0]); // overwrite
+    $request->mergeIfMissing(['votes' => 0]); // won't overwrite
+
+5.  OLD VALUES
+    Laravel keeps the input from one req to another, useful for re-populating forms after detecting validation errors
+    // however including validation features, we need not to manually use session input flashing methods directly, as some 
+    // of Laravel's built-in validation facilities will call them automatically.
+
+    $request->flash(); //current input is stored in session, so available during next req
+
+    $request->flashOnly(['username', 'email']);   
+    $request->flashExcept('password');
+
+    return redirect('form')->withInput();// chain input 
+ 
+    // return redirect()->route('user.create')->withInput();
+    
+    return redirect('form')->withInput(
+        $request->except('password')
+    );
+
+    //to retrive the old value
+
+    $username = $request->old('username');
+
+6.  COOKIES
+    use Illuminate\Http\Request;
+    $value = $request->cookie('name');
+
+7.  Skipping the middlewares
+    If we need to skip TrimStrings and ConvertEmptyStringsToNull middlewares we can do by using skipWhen methods
+
+    AppServiceProvider :
+
+    // public function boot(): void
+    // {
+    //     TrimStrings::skipWhen(function (Request $request) {
+    //         return $request->is('admin/*');
+    //     });
+    
+    //     ConvertEmptyStringsToNull::skipWhen(function (Request $request) {
+    //         // ...
+    //     });
+    // } 
+
+8.  Files
+    $file = $request->file('photo'); // used to retrieve the data when we have other type of data with same key
+    $file = $request->photo; // when the form has photo name
+    $request->hasFile('photo'); //returns boolean value if the photo presents
+
+    request->file('photo')->isValid(); // check for any problems
+ 
+    $path = $request->photo->path();   
+    $extension = $request->photo->extension();
+
+    Storing files
+
+    location to save files will be present in config file
+
+    // here the app will generate the value on its own, in order to have the unique names
+    $path = $request->photo->store('images');
+    $path = $request->photo->store('images', 's3'); // second arg used to store the file in specific disk
+    
+    // when we need to rename the file name
+    // $path = $request->photo->storeAs('images', 'filename.jpg'); 
+    // $path = $request->photo->storeAs('images', 'filename.jpg', 's3');
+
+9.  Configuring tested proxies
+    // load balancer will have the req and ssl certificates are sometimes not generated
+    // to solve this issues we may use TrustProxies middleware
+    
+    namespace App\Http\Middleware;
+    class TrustProxies extends Middleware
+    {
+        protected $proxies = [
+            '192.168.1.1',
+            '192.168.1.2',
+        ];
+        // protected $proxies = '*';  if we are using amazon aws or cloud load balancer we may not know the ip, we need to include all
+        protected $headers = Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO;
+    }
+
+    // if we are using AWS Elastic Load Balancing, the head value should be Request::HEADER_X_FORWARDED_AWS_ELB
+
+10. Configuring tested hosts
+    // if we have a doubt of accepting the req from every host, we can narrow down the hosts from the req can be accepted
+    // TrustHost middleware will be used and it is already declared in middleware, we just need to uncomment this
+    // 
+
+    // public function hosts(): array
+    // {
+    //     return [
+    //         'laravel.test',
+    //         $this->allSubdomainsOfApplicationUrl(),
+    //     ];
+    // }
+
+    the host url other than accepted host will be rejected.
+    

@@ -1,0 +1,22 @@
+User login, register : profile pic, forgot password -> session : 2 hr, token : 1 day
+Task create, delete, update : store : 3 day
+
+View : 
+Home : task(pagination , 5 per page) -> with the assigned person
+
+AJAX reqs
+
+unassignes tasks : shouldn't show in board
+board : todo, in progess, completed, search, filter
+
+filter : search by task tile -> filter by date, status
+
+insigt : avg daily|monthly|yearly task , for month : select month should be implemented
+
+report : show only assigned task
+filter by date
+
+email notifications : queue : to all assigned users
+report download from report bar : download pdf report and mail to the user
+
+export task : download excel sheet and vice versa

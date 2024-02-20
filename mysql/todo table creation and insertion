@@ -1,0 +1,141 @@
+create table department(
+	id int primary key,
+  name varchar(20)
+)
+alter table team modify name varchar(30);
+create table team(
+	id int primary key,
+  dept_id int,
+  name varchar(30),
+  foreign key(dept_id) references department(id)
+)
+create table employee(
+	id int primary key,
+  name varchar(20),
+  team_id int,
+  designation varchar(20),
+  foreign key(team_id) references team(id)
+)
+create table task_mapping(
+	id int primary key,
+  task_id int,
+  emp_id int,
+  role varchar(20),
+  status_ boolean,
+  time_completed datetime,
+  foreign key(task_id) references task(id),
+  foreign key(emp_id) references employee(id)
+)
+alter table task_mapping drop column role;
+create table task(
+	id int primary key,
+  title varchar(20),
+  description varchar(40),
+  urgency boolean,
+  parent_id int,
+  status_ boolean,
+  time_assigned datetime,
+ 	time_completed datetime,
+  foreign key(parent_id) references task(id)
+)
+alter table task modify description varchar(100);
+alter table task add have_subtask boolean;
+
+insert into department values 
+("1","technical"),("2","sales"),("3","marketing"),("4","hr");
+
+select * from department;
+
+insert into team values
+("1","1","react"),("2","1","db"),("3","1","back"),
+("4","2","inside_sales"),("5","2","making_sales"),("6","2","client_rel"),
+("7","3","analyst"),("8","3","coord"),("9","3","consultant"),
+("10","4","talent_management"),("11","4","training_dev"),("12","4","compensation_benefits");
+
+select * from team;
+
+insert into employee values
+("1","aditya","1","xml"),("2","arjun","1","xml"),("3","abi","1","tester"),
+("4","bala","2","query"),("5","baskar","2","query"),("6","baki","2","admin"),
+("7","chandru","3","api"),("8","churchill","3","auth"),("9","deva","3","tester"),
+("10","dhiva","4","team"),("11","deepak","4","team"),("12","daanu","4","manager"),
+("13","gokul","5","team"),("14","guru","5","team"),("15","hari","5","manager"),
+("16","indhu","6","team"),("17","jack","6","team"),("18","kalyan","6","manager"),
+("19","lokesh","7","team"),("20","mani","7","team"),("21","muthu","7","manager"),
+("22","naveen","8","team"),("23","pramesh","8","team"),("24","pradeep","8","manager"),
+("25","ravi","9","team"),("26","raj","9","team"),("27","shiva","9","manager"),
+("28","sethu","10","team"),("29","sabari","10","team"),("30","santhosh","10","manager"),
+("31","srinath","11","team"),("32","tharun","11","team"),("33","varun","11","manager"),
+("34","vinoth","12","team"),("35","vikas","12","team"),("36","vishnu","12","manager")
+
+select * from employee;
+show columns from task;
+
+insert into task(id,title,description,urgency,status_,time_assigned,have_subtask) values 
+("1","UI/UX enhancement","To improve the UX of the landing page according to the needs",false,false,"2024-01-01 10:00:00",false),
+("2","Adding components","",false,false,"2024-01-12 12:00:00",true),
+("3","Creating table","Create influencers table",true,false,"2024-01-14 11:00:00",false),
+("4","Query Optimizations","",false,false,"2024-01-15 13:00:00",true),
+("5","API testing","",false,false,"2024-01-14 10:00:00",true),
+("6","Sales Report","Prepare and submit the report",true,false,"2024-01-01 10:00:00",false),
+("7","Clinet Call","Having client call at 12pm",true,false,"2024-01-02 10:00:00",false),
+("8","Data analysis","",false,false,"2024-01-10 14:00:00",true),
+("9","Consultency","Call with patner companied at 1pm",true,false,"2024-01-09 11:00:00",false);
+#2:3 4:2 5:3 8:2
+
+insert into task(id,title,description,urgency,parent_id,status_,time_assigned,have_subtask) values 
+("10","Home Component","Adding home component to the webpage",true,"2",false,"2024-01-12 12:00:00",false),
+("11","About Component","Adding about component to the webpage",false,"2",false,"2024-01-12 12:00:00",false),
+("12","Store Component","Adding store component to the webpage",true,"2",false,"2024-01-12 12:00:00",false),
+("13","User Query","Optimizing the user query",false,"4",false,"2024-01-15 13:00:00",false),
+("14","Market Query","Optimizing the market query",false,"4",false,"2024-01-15 15:00:00",false),
+("15","Get","Test get api from the servers",true,"5",false,"2024-01-14 10:00:00",false),
+("16","Put","Test put api from the servers",true,"5",false,"2024-01-14 11:00:00",false),
+("17","Post","Test post api from the servers",false,"5",false,"2024-01-14 12:00:00",false),
+("18","Data Gathering","Collect the required data from the dataset",false,"8",false,"2024-01-10 14:00:00",false),
+("19","Prepare Dashboard","Prepare the dashboard from the data",true,"8",false,"2024-01-10 14:00:00",false);
+
+# 19 task
+# 8 cross department task
+
+insert into task_mapping(id,task_id,emp_id,status_) values
+("1","1","1",false),
+("2","3","4",false),
+("3","6","10",false),
+("4","7","16",false),
+("5","9","25",false),
+("6","10","2",false),
+("7","11","2",false),
+("8","12","3",false),
+("9","13","5",false),
+("10","14","6",false),
+("11","15","7",false),
+("12","16","8",false),
+("13","17","9",false),
+("14","18","5",false),
+("15","19","19",false);
+#18 19 subtask of 8 have employee from different department
+select * from task_mapping;
+
+#task->task_mapping
+create trigger status_updater 
+after update on task 
+for each row
+begin
+update task_mapping set status_ = true, time_completed = task.time_completed where status_=true or task_mapping.id = (select id from task where status_ = true);
+end;
+
+#task_mapping->task
+create trigger status_updater_ 
+after update on task_mapping
+for each row
+begin
+update task set status_ = true, time_completed = task_mapping.time_completed where status_=true or task.id = (select id from task_mapping where status_ = true);
+end;
+savepoint data_entry_done;
+
+update task_mapping t set t.status=1 where t.id=1;
+
+select * from task;
+show tables;
+

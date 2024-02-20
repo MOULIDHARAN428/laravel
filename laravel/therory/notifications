@@ -1,0 +1,86 @@
+Notifications can send the message via SMS(via Nexmo), slack
+
+app/Notifications
+
+php artisan make:notification InvoicePaid
+
+use App\Notifications\InvoicePaid;
+ 
+$user->notify(new InvoicePaid($invoice));
+
+or
+
+Notification::send($users, new InvoicePaid($invoice));
+
+Through which medium the mail need to be delivered
+
+public function via($notifiable)
+{
+    return $notifiable->prefers_sms ? ['nexmo'] : ['mail', 'database'];
+}
+
+Queueing Notifications
+class InvoicePaid extends Notification implements ShouldQueue
+{
+    use Queueable;
+}
+
+Delaying the mail
+$when = Carbon::now()->addMinutes(10);
+ 
+$user->notify((new InvoicePaid($invoice))->delay($when));
+
+Mail formatting
+
+public function toMail($notifiable)
+{
+    $url = url('/invoice/'.$this->invoice->id);
+ 
+    return (new MailMessage)
+                ->greeting('Hello!')
+                ->line('One of your invoices has been paid!')
+                ->action('View Invoice', $url)
+                ->line('Thank you for using our application!');
+}
+
+Customizing the recipient
+
+class User extends Authenticatable
+{
+    use Notifiable;
+    public function routeNotificationForMail()
+    {
+        return $this->email_address;
+    }
+}
+
+Customizing the subject
+
+public function toMail($notifiable)
+{
+    return (new MailMessage)
+                ->subject('Notification Subject')
+                ->line('...');
+}
+
+Error message via notification
+
+public function toMail($notifiable)
+{
+    return (new MailMessage)
+                ->error()
+                ->subject('Notification Subject')
+                ->line('...');
+}
+
+database notification
+if the amount has been changed
+
+public function toArray($notifiable)
+{
+    return [
+        'invoice_id' => $this->invoice->id,
+        'amount' => $this->invoice->amount,
+    ];
+}
+

@@ -1,0 +1,42 @@
+->>>>Errors<<<<<-
+
+Debug method in config/app.php will have how much error to be displayed
+For local deployment APP_DEBUG can be false to know error
+But for live it should be false as the error shouldn't be shown 
+
+App\Exceptions\Handler
+
+register method will have custom exception reporting
+Contians report and render
+
+report : to log exceptions
+
+To raise the exceptions
+abort(404);
+abort(403, 'Unauthorized action.');
+
+
+->>>>>>Log<<<<<-
+single, daily, syslog, error log
+
+config/logging.php
+
+uses monolog library
+
+to change the log file usage
+'log' => 'daily'
+
+Maximum Daily Log Files
+'log_max_files' => 30
+
+Log::emergency($message);
+Log::alert($message);
+Log::critical($message);
+Log::error($message);
+Log::warning($message);
+Log::notice($message);
+Log::info($message);
+Log::debug($message);
+s
+Log::info('User failed to login.', ['id' => $user->id]);
+$monolog = Log::getMonolog();

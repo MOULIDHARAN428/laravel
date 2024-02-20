@@ -1,0 +1,82 @@
+php artisan make:auth
+Guards    : defines how users are authenticated for each req 
+Providers : defines how users are retrieved from the storage
+
+App\User Eloquent model in your app directory used for default authentication server
+the table will contains remember_token which can contains null values for storing the token, when user clicks remember me
+
+Command to scaffold routes and views you need for authentication
+creates view for authentications
+php artisan make:auth
+
+By default the authentication is done by email
+
+1.  Retrieving The Authenticated User
+
+    // Get the currently authenticated user...
+        $user = Auth::user();
+
+    // Get the currently authenticated user's ID...
+        $id = Auth::id();
+    
+    if (Auth::check()) {
+        // The user is logged in...
+    }
+
+    **Middleware**
+    Route::get('profile', function () {
+        // Only authenticated users may enter...
+    })->middleware('auth');
+    The route profile will be available only if the user is authenticated
+
+    **Login Controller**
+    class LoginController extends Controller
+    {
+        public function authenticate()
+        {
+            if (Auth::attempt(['email' => $email, 'password' => $password])) {
+                return redirect()->intended('dashboard');
+            }
+        }
+    }
+
+    **Guard authenticatin - specific authentications**
+    Admin Authentication
+    if (Auth::guard('admin')->attempt($credentials)) {
+        //views
+    }
+
+    Auth::logout();
+
+    **Remeber User**
+    $remember is the boolean value
+    The table should contains "remember_token" col which will conatins the token of the remember me
+    if (Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
+        // The user is being remembered...
+    }
+
+    to check remember value
+    if (Auth::viaRemember()) {
+        //
+    }
+    
+    Auth::login($user);
+ 
+    // Login and "remember" the given user...
+    Auth::login($user, true);
+
+    Auth::guard('admin')->login($user);
+
+    **Authenticate using user ID**
+    Auth::loginUsingId(1);
+ 
+    // Login and "remember" the given user...
+    Auth::loginUsingId(1, true);
+
+    Authenticate the user once
+
+    if (Auth::once($credentials)) {
+        //
+    }
+
+    

@@ -1,0 +1,736 @@
+config/database.php
+
+'sqlsrv' => [
+    'driver' => 'sqlsrv',
+    'host' => env('DB_HOST', 'localhost'),
+    'database' => env('DB_DATABASE', 'forge'),
+    'username' => env('DB_USERNAME', 'forge'),
+    'password' => env('DB_PASSWORD', ''),
+    'charset' => 'utf8',
+    'prefix' => '',
+],
+
+Connections can have different connections for read and write
+
+'mysql' => [
+    'read' => [
+        'host' => '192.168.1.1',
+    ],
+    'write' => [
+        'host' => '196.168.1.2'
+    ],
+    'driver'    => 'mysql',
+    'database'  => 'database',
+    'username'  => 'root',
+    'password'  => '',
+    'charset'   => 'utf8',
+    'collation' => 'utf8_unicode_ci',
+    'prefix'    => '',
+],
+
+For using multiple database connections
+
+$users = DB::connection('foo')->select(...);
+
+PDO is a PHP extension that provides a uniform method of access to different databases
+$pdo = DB::connection()->getPdo();
+
+1.  Select
+    
+    class UserController extends Controller
+    {
+        public function index()
+        {
+            $users = DB::select('select * from users where active = ?', [1]);
+            // in above the ? will be replaced by 1
+    
+            return view('user.index', ['users' => $users]);
+        }
+    }
+
+    foreach ($users as $user) {
+        echo $user->name;
+    }
+
+    $results = DB::select('select * from users where id = :id', ['id' => 1]);
+
+    Insert
+
+    DB::insert('insert into users (id, name) values (?, ?)', [1, 'Dayle']);
+
+    Update
+
+    $affected = DB::update('update users set votes = 100 where name = ?', ['John']);
+
+    Delete
+
+    $deleted = DB::delete('delete from users');
+
+    Drop
+
+    DB::statement('drop table users');
+
+    DB::transaction(function () {
+        DB::table('users')->update(['votes' => 1]);
+    
+        DB::table('posts')->delete();
+    });
+
+    The number of times the transaction need to occur(5) before it throws an error
+    DB::transaction(function () {
+        DB::table('users')->update(['votes' => 1]);
+    
+        DB::table('posts')->delete();
+    }, 5);
+
+    DB::beginTransaction();
+    DB::rollBack();
+    DB::commit();
+
+2.  Query Builders : DML
+
+    Retrieve all rows from the table
+    
+    public function index()
+    {
+        $users = DB::table('users')->get();
+ 
+        return view('user.index', ['users' => $users]);
+    }
+
+    foreach ($users as $user) {
+        echo $user->name;
+    }
+
+    Retrieve single row
+
+    $user = DB::table('users')->where('name', 'John')->first();   
+    echo $user->name;
+
+    Retrieve single value from a row
+
+    $email = DB::table('users')->where('name', 'John')->value('email');
+
+    Retrieve list of col values : give the values in the title col
+    $titles = DB::table('roles')->pluck('title');
+
+    Retrieve two cols
+    $roles = DB::table('roles')->pluck('title', 'name');
+
+    Chunk : to Retrieve a part of the database (100) and return async
+    If we need to stop the chunk we can return false to stop
+
+    DB::table('users')->orderBy('id')->chunk(100, function ($users) {
+        foreach ($users as $user) {
+            //
+        }
+        if(){
+            return false;
+        }
+    });
+
+    Aggregate function
+
+    $users = DB::table('users')->count();
+    
+    $price = DB::table('orders')->max('price');
+
+    $price = DB::table('orders')
+                ->where('finalized', 1)
+                ->avg('price');
+    
+    Select
+
+    $users = DB::table('users')->select('name', 'email as user_email')->get();
+
+    $users = DB::table('users')->distinct()->get();
+
+    add additional select statements to the query
+    $query = DB::table('users')->select('name');
+    $users = $query->addSelect('age')->get();
+
+    $users = DB::table('users')
+            ->select(DB::raw('count(*) as user_count, status'))
+            ->where('status', '<>', 1)
+            ->groupBy('status')
+            ->get();
+    
+    Joins
+
+    Inner join ~ join
+
+    $users = DB::table('users')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->join('orders', 'users.id', '=', 'orders.user_id')
+            ->select('users.*', 'contacts.phone', 'orders.price')
+            ->get();
+    
+    Left Join
+
+    $users = DB::table('users')
+            ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+    
+    Cross Join
+
+    $users = DB::table('sizes')
+            ->crossJoin('colours')
+            ->get();
+    
+    Advanced Join Clauses
+
+    DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')->orOn(...);
+        })
+        ->get();
+    
+    DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')
+                 ->where('contacts.user_id', '>', 5);
+        })
+        ->get();
+    
+    Unions
+
+    $first = DB::table('users')
+            ->whereNull('first_name');
+    
+    $users = DB::table('users')
+                ->whereNull('last_name')
+                ->union($first)
+                ->get();
+    
+    It will combines the users whos first_name or last_name is null
+
+    where
+
+    $users = DB::table('users')->where('votes', '=', 100)->get();
+    (or)
+    $users = DB::table('users')->where('votes', 100)->get();
+
+    $users = DB::table('users')
+                ->where('votes', '>=', 100)
+                ->get();
+    
+    not equal
+    $users = DB::table('users')
+                    ->where('votes', '<>', 100)
+                    ->get();
+    
+    regex
+    $users = DB::table('users')
+                    ->where('name', 'like', 'T%')
+                    ->get();
+    
+    multiple conditions
+    and
+    $users = DB::table('users')->where([
+        ['status', '=', '1'],
+        ['subscribed', '<>', '1'],
+    ])->get();
+
+    or
+    $users = DB::table('users')
+            ->where('votes', '>', 100)
+            ->orWhere('name', 'John')
+            ->get();
+
+    between
+    $users = DB::table('users')
+            ->whereBetween('votes', [1, 100])->get();
+    
+    not between
+    $users = DB::table('users')
+            ->whereNotBetween('votes', [1, 100])
+            ->get();
+
+    in and not in
+    $users = DB::table('users')
+            ->whereIn('id', [1, 2, 3])
+            ->get();
+    $users = DB::table('users')
+            ->whereNotIn('id', [1, 2, 3])
+            ->get();
+    
+    null or not null
+    $users = DB::table('users')
+            ->whereNull('updated_at')
+            ->get();
+    $users = DB::table('users')
+            ->whereNotNull('updated_at')
+            ->get();
+    
+    date, month, day and year
+
+    $users = DB::table('users')
+            ->whereDate('created_at', '2016-12-31')
+            ->get();
+    $users = DB::table('users')
+            ->whereMonth('created_at', '12')
+            ->get();
+    $users = DB::table('users')
+            ->whereDay('created_at', '31')
+            ->get();
+    $users = DB::table('users')
+            ->whereYear('created_at', '2016')
+            ->get();
+    
+    Where col ~ to check whether two cols are equals
+
+    $users = DB::table('users')
+            ->whereColumn('first_name', 'last_name')
+            ->get();
+    
+    greater
+    $users = DB::table('users')
+            ->whereColumn('updated_at', '>', 'created_at')
+            ->get();
+    
+    multiple cols and
+    $users = DB::table('users')
+            ->whereColumn([
+                ['first_name', '=', 'last_name'],
+                ['updated_at', '>', 'created_at']
+            ])->get();
+    
+    parameter grouping
+
+    DB::table('users')
+        ->where('name', '=', 'John')
+        ->orWhere(function ($query) {
+            $query->where('votes', '>', 100)
+            ->where('title', '<>', 'Admin');
+        })
+        ->get();
+    
+    Exists
+
+    DB::table('users')
+        ->whereExists(function ($query) {
+            $query->select(DB::raw(1))
+                    ->from('orders')
+                    ->whereRaw('orders.user_id = users.id');
+        })
+        ->get();
+
+    The query above will produce the sql like | select 1 ~ any row is available
+    select * from users where exists ( select 1 from orders where orders.user_id = users.id)
+
+    JSON where Clauses
+
+    $users = DB::table('users')
+            ->where('options->language', 'en')
+            ->get();
+ 
+    $users = DB::table('users')
+            ->where('preferences->dining->meal', 'salad')
+            ->get();
+    
+    order
+
+    $users = DB::table('users')
+            ->orderBy('name', 'desc')
+            ->get();
+    
+    latest
+
+    $user = DB::table('users')
+            ->latest()
+            ->first();
+
+    oldest
+
+    $user = DB::table('users')
+            ->oldest()
+            ->first();
+    
+    random
+
+    $randomUser =   DB::table('users')
+                    ->inRandomOrder()
+                    ->first();
+
+    grouo by | having
+
+    $users= DB::table('users')
+            ->groupBy('account_id')
+            ->having('account_id', '>', 100)
+            ->get();
+    
+    $users = DB::table('orders')
+            ->select('department', DB::raw('SUM(price) as total_sales'))
+            ->groupBy('department')
+            ->havingRaw('SUM(price) > 2500')
+            ->get();
+    
+    skip,take / offset limit
+
+    $users = DB::table('users')->skip(10)->take(5)->get();
+     or
+    $users = DB::table('users')->offset(10)->limit(5)->get();
+
+    Conditional Clauses
+    when method will executes the second parameter when the first parameter is true
+    we can have third parameter executes when the first parameter is false
+
+    $role = $request->input('role');
+ 
+    $users = DB::table('users')
+            ->when($role, function ($query) use ($role) {
+                return $query->where('role_id', $role);
+            })
+            ->get();
+    
+    $sortBy = null;
+ 
+    $users = DB::table('users')
+            ->when($sortBy, function ($query) use ($sortBy) {
+                return $query->orderBy($sortBy);
+            }, function ($query) {
+                return $query->orderBy('name');
+            })
+            ->get();
+    
+    insert
+
+    DB::table('users')->insert(
+        ['email' => 'john@example.com', 'votes' => 0]
+    );
+    DB::table('users')->insert([
+        ['email' => 'taylor@example.com', 'votes' => 0],
+        ['email' => 'dayle@example.com', 'votes' => 0]
+    ]);
+
+    If the col has autoincrement use insertGetId method to insert and retrieve
+    $id = DB::table('users')->insertGetId(
+        ['email' => 'john@example.com', 'votes' => 0]
+    );
+
+    update
+    DB::table('users')
+        ->where('id', 1)
+        ->update(['votes' => 1]);
+    
+    JSON update
+    DB::table('users')
+        ->where('id', 1)
+        ->update(['options->enabled' => true]);
+    
+    Increment/Decrement
+    DB::table('users')->increment('votes');
+ 
+    DB::table('users')->increment('votes', 5);
+
+    DB::table('users')->decrement('votes');
+
+    DB::table('users')->decrement('votes', 5);
+
+    More than on updates, done by passing the array values
+    DB::table('users')->increment('votes', 1, ['name' => 'John']);
+
+    Delete
+    DB::table('users')->delete();
+    
+    DB::table('users')->where('votes', '>', 100)->delete();
+
+    Pessmistic locking :
+    shared lock prevents the selected rows from being modified until your transaction commits
+
+    DB::table('users')->where('votes', '>', 100)->sharedLock()->get();
+     or
+    
+    A lockForUpdate prevents the rows from being modified or from being selected with another shared lock
+    DB::table('users')->where('votes', '>', 100)->lockForUpdate()->get();
+
+3.  Pagination : kinda view
+    integrated with the query builder and eloquent ORM
+
+    number of values to be showed per page : 15
+    public function index()
+    {
+        $users = DB::table('users')->paginate(15);
+ 
+        return view('user.index', ['users' => $users]);
+    }
+
+    to have next and prev links to navigate we can use simplePaginate
+    $users = DB::table('users')->simplePaginate(15);
+
+    $users = User::where('votes', '>', 100)->paginate(15);
+    $users = User::where('votes', '>', 100)->simplePaginate(15);
+
+    Displaying the pagination results
+    <div class="container">
+        @foreach ($users as $user)
+            {{ $user->name }}
+        @endforeach
+    </div>
+    
+    {{ $users->links() }}
+
+    Customizing the paginator URI
+    Route::get('users', function () {
+    $users = App\User::paginate(15);
+ 
+    $users->setPath('custom/url');
+    });
+
+    appending to pagination links
+    {{ $users->appends(['sort' => 'votes'])->links() }}
+    
+    Route::get('users', function () {
+        return App\User::paginate();
+    });
+
+    {
+        "total": 50,
+        "per_page": 15,
+        "current_page": 1,
+        "last_page": 4,
+        "next_page_url": "http://laravel.app?page=2",
+        "prev_page_url": null,
+        "from": 1,
+        "to": 15,
+        "data":[
+                {
+                    // Result Object
+                },
+                {
+                    // Result Object
+                }
+        ]
+    }
+
+4.  Migrations : DDL 
+    Allows to modify and share the applications database schema
+
+    database/migrations
+    php artisan make:migration create_users_table
+
+    indicates the name of the table
+    php artisan make:migration create_users_table --create=users
+    
+    indicates whether the migration will create new table
+    php artisan make:migration add_votes_to_users_table --table=users
+
+    Structures : up to add new tables and down for reverse the operations done by up
+    
+    class CreateFlightsTable extends Migration
+    {
+        public function up()
+        {
+            Schema::create('flights', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name');
+                $table->string('airline');
+                $table->timestamps();
+            });
+        }
+        public function down()
+        {
+            Schema::drop('flights');
+        }
+    }
+
+    php artisan migrate
+    php artisan migrate --force
+    php artisan migrate:rollback
+    php artisan migrate:rollback --step=5
+
+    will roll back all of your migrations
+    php artisan migrate:refresh
+ 
+    refresh the database and run all database seeds...
+    php artisan migrate:refresh --seed
+
+    rollback & re-migrate a limited number of migrations(5)
+    php artisan migrate:refresh --step=5
+
+    Schema::create('users', function (Blueprint $table) {
+        $table->increments('id');
+    });
+
+    if (Schema::hasTable('users')) {
+        //
+    }
+ 
+    if (Schema::hasColumn('users', 'email')) {
+        //
+    }
+
+    create table in specific database not in default DB
+    
+    Schema::connection('foo')->create('users', function (Blueprint $table) {
+        $table->increments('id');
+    });
+
+    can use engine property to define the database the table needs to be stored
+    Schema::create('users', function (Blueprint $table) {
+        $table->engine = 'InnoDB';
+    
+        $table->increments('id');
+    });
+
+    Schema::rename($from, $to);
+    Schema::drop('users');
+    Schema::dropIfExists('users');
+
+    create column
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('email');
+    });
+
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('email')->nullable();
+    });
+    ->after('column')
+    ->comment('my comment')
+    ->default($value)
+    ->first()
+    ->nullable()
+    ->storedAs($expression)
+    ->unsigned()
+    ->virtualAs($expression)
+
+    update col attributes
+
+    changing the length of the var from 25 to 50
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('name', 50)->change();
+    });
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('name', 50)->nullable()->change();
+    });
+
+    rename col
+    Schema::table('users', function (Blueprint $table) {
+        $table->renameColumn('from', 'to');
+    });
+
+    drop col
+    Schema::table('users', function (Blueprint $table) {
+        $table->dropColumn('votes');
+    });
+    Schema::table('users', function (Blueprint $table) {
+        $table->dropColumn(['votes', 'avatar', 'location']);
+    });
+
+    create index
+
+    $table->string('email')->unique(); 
+    or
+    $table->unique('email');
+
+    compound index
+    $table->index(['account_id', 'created_at']);
+
+    laravel will provide the 
+    $table->index('email', 'my_index_name');
+
+    drop primary key form users table
+    $table->dropPrimary('users_id_primary');
+    
+    drop unique index from the users table
+    $table->dropUnique('users_email_unique');
+
+    Foreign key
+    
+    Schema::table('posts', function (Blueprint $table) {
+        $table->integer('user_id')->unsigned();
+    
+        $table->foreign('user_id')->references('id')->on('users');
+    });
+
+    $table->foreign('user_id')
+      ->references('id')->on('users')
+      ->onDelete('cascade');
+
+    drop foreign key
+    $table->dropForeign('posts_user_id_foreign');
+
+    $table->dropForeign(['user_id']);
+
+    Schema::enableForeignKeyConstraints();
+    
+    Schema::disableForeignKeyConstraints();
+
+5.  Seeding
+    process of populating database table with sample or default data
+    
+    database/seeds
+
+    php artisan make:seeder UsersTableSeeder
+    class DatabaseSeeder extends Seeder
+    {
+        public function run()
+        {
+            DB::table('users')->insert([
+                'name' => str_random(10),
+                'email' => str_random(10).'@gmail.com',
+                'password' => bcrypt('secret'),
+            ]);
+        }
+    }
+
+6.  Redis
+    composer require predis/predis
+
+    config
+    config/database.php
+
+    'redis' => [
+        
+        'client' => 'predis',
+
+        'cluster' => false,
+
+        'default' => [
+            'host' => env('REDIS_HOST', 'localhost'),
+            'password' => env('REDIS_PASSWORD', null),
+            'port' => env('REDIS_PORT', 6379),
+            'database' => 0,
+        ],
+
+    ],
+
+    class UserController extends Controller
+    {
+        public function showProfile($id)
+        {
+            $user = Redis::get('user:profile:'.$id);
+    
+            return view('user.profile', ['user' => $user]);
+        }
+    }
+
+    Redis::set('name', 'Taylor');
+    
+    $values = Redis::lrange('names', 5, 10);
+
+    $redis = Redis::connection();
+
+    $redis = Redis::connection('server_name');
+
+    Redis::pipeline(function ($pipe) {
+        for ($i = 0; $i < 1000; $i++) {
+            $pipe->set("key:$i", $i);
+        }
+    });
+
+    publish and subscribe
+    publish sends a message to the specific channel, message sent to channel delivered to all subscribers of the channel
+    subscriber receives message from channel
+    
+    public function handle()
+    {
+        Redis::subscribe(['test-channel'], function ($message) {
+            echo $message;
+        });
+    }
+
+    Route::get('publish', function () {
+        Redis::publish('test-channel', json_encode(['foo' => 'bar']));
+    });
+

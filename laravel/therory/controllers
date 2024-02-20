@@ -1,0 +1,155 @@
+Controllers : Group related to request handling logic
+
+app/http/controllers
+
+UserController : handle all incoming reqs related to the users
+
+1. Basic Controller : php artisan make:controller UserController
+   have pulbic methods to handle the incoming httlp reqs
+
+    class UserController extends Controller
+    {
+        public function show(string $id): View {here view is the return type}
+        {
+            return view('user.profile', [
+                'user' => User::findOrFail($id) {if find the instance of model will return, ModelNotFoundException}
+            ]);
+        }
+    }
+
+    use App\Http\Controllers\UserController;
+    Route::get('/user/{id}', [UserController::class, 'show']);
+
+2. When we have controller which is too complex, then we can put the entire controller in separate class
+   
+   class ProvisionServer extends Controller
+    {
+        public function __invoke()
+        {
+            //
+        }
+    }
+    using invoke we can access the method of the class even not creating the object for the class
+    
+    Route::post('/server', ProvisionServer::class);
+
+    can create by the code : php artisan make:controller ProvisionServer --invokable
+
+3. Controller Middleware : the middleware can be declared in the constructor of the class instead in routes
+   
+   Route::get('profile', [UserController::class, 'show'])->middleware('auth');
+
+                    [OR]
+    
+    class UserController extends Controller
+    {
+        public function __construct()
+        {
+            $this->middleware('auth');
+            $this->middleware('log')->only('index'); // to perform only the index method : log method
+            $this->middleware('subscribed')->except('store'); // store method won't be executed : subscribed method
+        }
+    }
+
+4. **Resource Controller** : gives an templete for the CRUD operations
+   
+   php artisan make:controller PhotoController --resource 
+
+   https://laravel.com/docs/10.x/controllers#actions-handled-by-resource-controllers
+   {have the elobarate URI, actions and route name}
+
+    **Handling missing Model**
+    Route::resource('photos', PhotoController::class)
+        ->missing(function (Request $request) {
+            return Redirect::route('photos.index');
+    }); // If the photos URI not found then it will redirect to photos.index
+
+    **Soft delete Model**
+    Implicit model binding will not retrieve model that are soft delete and will return 404 response
+    We can allow soft delete model by invoking withTrashed method
+    
+    Route::resource('photos', PhotoController::class)->withTrashed(); // will have the soft methods of show,edit,update
+
+    Route::resource('photos', PhotoController::class)->withTrashed(['show']); // will have only show method
+
+    **Partial Resource Route**
+    Route::resource('photos', PhotoController::class)->only(['index', 'show']); // index and show method in PhotoController
+    
+    Route::resource('photos', PhotoController::class)->except(['create', 'store', 'update', 'destroy']);
+
+    **API Resource Route**
+    Whenever we use route on the resource controller we have the method for create and edit, Instead of excluding from the route manually we can use API resource to exclude them
+
+    Route::apiResource('photos', PhotoController::class);
+
+    Route::apiResources([
+        'photos' => PhotoController::class,
+        'posts' => PostController::class,
+    ]);
+
+    To create Resource that won't need create and edit we can use : php artisan make:controller PhotoController --api
+
+    **Nested Resources**
+
+    Route::resource('photos.comments', PhotoCommentController::class);
+
+    URI will be look like this : /photos/{photo}/comments/{comment}
+
+    **Overridding the resource route : Custom Names**
+
+    All resource controller will have route name, you can override by passing name array with route names
+
+    Route::resource('photos', PhotoController::class)->names([
+        'create' => 'photos.build'
+    ]);
+
+    here we override the create method with invoking the photos.build route for create action
+
+    **ROUTE DEFINITION**
+
+    Resource
+    Verb        URI                                 action      Route Name
+    GET     	/photos/{photo}/comments 	        index 	    photos.comments.index
+    GET 	    /photos/{photo}/comments/create 	create 	    photos.comments.create
+    POST 	    /photos/{photo}/comments 	        store 	    photos.comments.store
+    GET 	    /comments/{comment} 	            show 	    comments.show
+    GET 	    /comments/{comment}/edit 	        edit    	comments.edit
+    PUT/PATCH 	/comments/{comment} 	            update 	    comments.update
+    DELETE 	    /comments/{comment} 	            destroy 	comments.destroy
+
+    **Shallow Nesting**
+
+    helps me to remove deep nesting of urls', can be done by removing the parent resources names
+    Route::resource('posts.comments', CommentController::class);
+
+    GET /posts/{post}/comments/create -> GET /comments/create
+
+    **Supplement Resource Controller**
+    To add additional routes beyond default, you should define those routes before you call resource methods.
+    
+    Route::get('/photos/popular', [PhotoController::class, 'popular']); //additional routers
+    Route::resource('photos', PhotoController::class);
+
+5.  **Singleton Resource Controller**
+
+    When we have single instance we can have singleton, example when the user can have one profile and one picture can have only one thumbnail.
+
+    Route::singleton('profile', ProfileController::class); // will have get, put / patch
+
+    Route::singleton('photos.thumbnail', ThumbnailController::class);
+    GET 	   : /photos/{photo}/thumbnail
+    PUT/PATCH  : /photos/{photo}/thumbnail
+
+    **Creatable & Destroyable Singleton Resource**
+
+    To have creation, storage routes along with delete we can use creatable method
+
+    Route::singleton('photos.thumbnail', ThumbnailController::class)->creatable();
+
+    If we don't need the create and store routes we can use destroyable method
+
+    Route::singleton('photos.thumbnail', ThumbnailController::class)->destroyable();
+
+    **API Singleton**
+
+    Route::apiSingleton('profile', ProfileController::class);

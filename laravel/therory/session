@@ -1,0 +1,181 @@
+Session : helps us to start info about the user across various sessions
+
+config/session.php
+
+Redis : the session storage that can access from different servers
+
+file                - sessions are stored in storage/framework/sessions.
+cookie              - sessions are stored in secure, encrypted cookies.
+database            - sessions are stored in a relational database.
+memcached / redis   - sessions are stored in one of these fast, cache based stores.
+dynamodb            - sessions are stored in AWS DynamoDB.
+array               - sessions are stored in a PHP array and will not be persisted.
+
+To store the session in the database
+
+Schema::create('sessions', function (Blueprint $table) {
+    $table->string('id')->primary();
+    $table->foreignId('user_id')->nullable()->index();
+    $table->string('ip_address', 45)->nullable();
+    $table->text('user_agent')->nullable();
+    $table->text('payload');
+    $table->integer('last_activity')->index();
+});
+
+or
+
+php artisan session:table
+php artisan migrate
+
+1.  **Interacting with the session**
+
+    class UserController extends Controller
+    {
+        public function show(Request $request, string $id): View
+        {
+            $value = $request->session()->get('key'); **getting key value from the session**
+    
+            $user = $this->users->find($id);
+    
+            return view('user.profile', ['user' => $user]);
+        }
+    }
+
+    If the value is not present in the session we will provide the default value or func
+
+    $value = $request->session()->get('key', 'default');
+    
+    $value = $request->session()->get('key', function () {
+        return 'default';
+    });
+
+2.  **Storing and Retrieving the session**
+
+    Route::get('/home', function () {
+        // Retrieve a piece of data from the session...
+        $value = session('key');
+    
+        // Specifying a default value...
+        $value = session('key', 'default');
+    
+        // Store a piece of data in the session...
+        session(['key' => 'value']);
+    });
+
+    **Retrieve all session data**
+    $data = $request->session()->all();
+
+    **Retrieve portion of session data**
+    $data = $request->session()->only(['username', 'email']);   
+    $data = $request->session()->except(['username', 'email']);
+
+    **Checking if the item exists**
+
+    returns true if users is not null
+    if ($request->session()->has('users')) {
+        // ...
+    } 
+
+    returns true if the users have been in session, even it has null value it returns true
+    if ($request->session()->exists('users')) {
+        // ...
+    }
+
+    if ($request->session()->missing('users')) {
+        // ...
+    }
+
+    **Storing in the session**
+    // Via a request instance...
+        $request->session()->put('key', 'value'); 
+   
+    
+    // Via the global "session" helper...
+        session(['key' => 'value']); 
+   
+
+    **Pushing to array session**
+        $request->session()->push('user.teams', 'developers'); 
+   
+    
+    **Retrieve and Delete the session value**
+        $value = $request->session()->pull('key', 'default');
+
+    **Incrementing and Decrementing Values**
+
+        $request->session()->increment('count');
+        
+        $request->session()->increment('count', $incrementBy = 2);
+        
+        $request->session()->decrement('count');
+        
+        $request->session()->decrement('count', $decrementBy = 2);
+
+    **FLASH**
+
+    Flash method is used to store the data and it will be used in next req
+    If will be automatically deleted in sub-sequent req
+
+        $request->session()->flash('status', 'Task was successful!');
+        
+    To keep the entire flash data to the next req
+        $request->session()->reflash();        
+        
+    To keep the specific data to next req
+        $request->session()->keep(['username', 'email']);
+
+    To resist the flash for the current req
+        $request->session()->now('status', 'Task was successful!');
+    
+    **Deleting the Session data**
+    // Forget a single key...
+       $request->session()->forget('name');
+    
+    // Forget multiple keys...
+        $request->session()->forget(['name', 'status']);
+    
+    // To delete all the data
+        $request->session()->flush();
+
+    **Regenerating session ID**
+
+    regenerating the session ID, done in order to prevent from the malacious users
+    however the laravel will generate the session id during authentications
+    we can do it manually by using the session methods
+
+    Regerating the session ID
+        $request->session()->regenerate();
+
+    Regenerating the session ID and deleting the session data
+        $request->session()->invalidate();
+
+    **Session Blocking**
+    Whenever we have the concurrent requests for the same session, we need to block the req for the specific time,
+    as there is the possibility of small loss of session data
+    
+    Route::post('/profile', function () {
+        // ...
+    })->block($lockSeconds = 10, $waitSeconds = 10)
+    
+    Route::post('/order', function () {
+        // ...
+    })->block($lockSeconds = 10, $waitSeconds = 10)
+
+    **Adding custom session drivers**
+    If the existing session drivers doesn't fit your application needs, laravel makes it possible to write its own session handler.
+    Your custom session driver should implement PHP's built-in SessionHandlerInterface.
+
+    namespace App\Extensions;
+    
+    class MongoSessionHandler implements \SessionHandlerInterface
+    {
+        public function open($savePath, $sessionName) {}
+        public function close() {}
+        public function read($sessionId) {}
+        public function write($sessionId, $data) {}
+        public function destroy($sessionId) {}
+        public function gc($lifetime) {} // deletes the sessions that are older than the specific time
+    }
+
+    
+

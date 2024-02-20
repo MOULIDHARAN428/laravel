@@ -1,0 +1,93 @@
+Storage::disk('local')->put('file.txt', 'Contents');
+
+FTP
+'ftp' => [
+    'driver'   => 'ftp',
+    'host'     => 'ftp.example.com',
+    'username' => 'your-username',
+    'password' => 'your-password',
+ 
+    // Optional FTP Settings...
+    // 'port'     => 21,
+    // 'root'     => '',
+    // 'passive'  => true,
+    // 'ssl'      => true,
+    // 'timeout'  => 30,
+],
+
+Rachspace
+'rackspace' => [
+    'driver'    => 'rackspace',
+    'username'  => 'your-username',
+    'key'       => 'your-key',
+    'container' => 'your-container',
+    'endpoint'  => 'https://identity.api.rackspacecloud.com/v2.0/',
+    'region'    => 'IAD',
+    'url_type'  => 'publicURL',
+],
+
+avatar is the location where the file stores
+
+Store
+
+Storage::put('avatars/1', $fileContents);
+
+Storage::disk('s3')->put('avatars/1', $fileContents);
+
+Retrieve
+
+$contents = Storage::get('file.jpg');
+
+$exists = Storage::disk('s3')->exists('file.jpg');
+
+Getting from the external links
+
+$url = Storage::url('file1.jpg');
+
+Function
+
+$size = Storage::size('file1.jpg');
+$size = Storage::size('file1.jpg');
+
+Storage::put('file.jpg', $contents);
+Storage::put('file.jpg', $resource);
+
+Get the file from the local storage
+
+// Automatically generate a UUID for file name...
+Storage::putFile('photos', new File('/path/to/photo'));
+ 
+// Manually specify a file name...
+Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg');
+
+//visibility -> public
+Storage::putFile('photos', new File('/path/to/photo'), 'public');
+
+Storage::setVisibility('file.jpg', 'public')
+
+//prepend and append
+Storage::prepend('file.log', 'Prepended Text');
+ 
+Storage::append('file.log', 'Appended Text');
+
+//copy and move
+Storage::copy('old/file1.jpg', 'new/file1.jpg');
+ 
+Storage::move('old/file1.jpg', 'new/file1.jpg');
+
+//delete
+Storage::delete('file.jpg');
+ 
+Storage::delete(['file1.jpg', 'file2.jpg']);
+
+//get files from the dict
+$files = Storage::files($directory);
+ 
+$files = Storage::allFiles($directory);
+
+//mkdir
+Storage::makeDirectory($directory);
+
+//remove dir
+Storage::deleteDirectory($directory);
+

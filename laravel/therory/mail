@@ -1,0 +1,185 @@
+Each mail typically uses blade template to render its contents
+
+Mailgun and SparkPost drivers are used to send the mail 
+Both this drivers require Guzzle HTTP library 
+
+composer require guzzlehttp/guzzle
+
+Mailgun driver
+update the driver options in the config/mail.php to mailgun
+check whether config/services.php contians this config
+'mailgun' => [
+    'domain' => 'your-mailgun-domain',
+    'secret' => 'your-mailgun-key',
+],
+
+SparkPost
+update the driver options in the config/mail.php to SparkPost
+check whether config/services.php contians this config
+'sparkpost' => [
+    'secret' => 'your-sparkpost-key',
+],
+
+each type of email sent by your application is represented as a "mailable" class
+stored in ap/mail dir if not present creat by
+php artisan make:mail OrderShipped
+
+public function build()
+{
+    return $this->from('example@example.com')
+                ->view('emails.orders.shipped');
+}
+
+We can use global from which should be declared in config/mail.php
+'from' => ['address' => 'example@example.com', 'name' => 'App Name'],
+
+If we need to return the simple text, we can use the text method
+public function build()
+{
+    return $this->view('emails.orders.shipped')
+                ->text('emails.orders.shipped_plain');
+}
+
+Value for the view to customize can be may be passed to them to assign as the global value
+
+**Global value - Public**
+
+class OrderShipped extends Mailable
+{
+    use Queueable, SerializesModels;
+    public $order;
+    public function __construct(Order $order)
+    {
+        $this->order = $order;
+    }
+    public function build()
+    {
+        return $this->view('emails.orders.shipped'); **Just calling the view without sending the value**
+    }
+}
+
+Accessing the value
+<div>
+    Price: {{ $order->price }}
+</div>
+
+**Passing the parameter - Protected**
+
+class OrderShipped extends Mailable
+{
+    use Queueable, SerializesModels;
+    protected $order;
+    public function __construct(Order $order)
+    {
+        $this->order = $order;
+    }
+    public function build()
+    {
+        return $this->view('emails.orders.shipped')
+                    ->with([
+                        'orderName' => $this->order->name,
+                        'orderPrice' => $this->order->price,
+                    ]); **sending the values**
+    }
+}
+
+<div>
+    Price: {{ $orderPrice }}
+</div>
+
+**Attachments**
+
+public function build()
+{
+    return $this->view('emails.orders.shipped')
+                ->attach('/path/to/file');
+}
+
+public function build()
+{
+    return $this->view('emails.orders.shipped')
+                ->attach('/path/to/file', [
+                    'as' => 'name.pdf',
+                    'mime' => 'application/pdf',
+                ]);
+}
+
+**If we have the raw string value to be attached as file**
+public function build()
+{
+    return $this->view('emails.orders.shipped')
+                ->attachData($this->pdf, 'name.pdf', [
+                    'mime' => 'application/pdf',
+                ]);
+}
+
+**Inline attachments**
+
+<body>
+    Here is an image:
+ 
+    <img src="{{ $message->embed($pathToFile) }}">
+</body>
+
+<body>
+    Here is an image from raw data:
+ 
+    <img src="{{ $message->embedData($data, $name) }}">
+</body>
+
+**Sending mail**
+
+class OrderController extends Controller
+{
+    public function ship(Request $request, $orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        Mail::to($request->user())->send(new OrderShipped($order));
+    }
+}
+
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->send(new OrderShipped($order));
+
+
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue(new OrderShipped($order));
+
+**Queueing Mail**
+
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue(new OrderShipped($order));
+
+**Delaying the mail**
+
+    $when = Carbon\Carbon::now()->addMinutes(10);
+ 
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->later($when, new OrderShipped($order));
+
+**Pushing to specific queue**
+$message = (new OrderShipped($order))
+                ->onConnection('sqs')
+                ->onQueue('emails');
+ 
+Mail::to($request->user())
+    ->cc($moreUsers)
+    ->bcc($evenMoreUsers)
+    ->queue($message);
+
+Instead of sending the mail for the live mail
+we can have log files to inspect the mail
+
+'to' => [
+    'address' => 'example@example.com',
+    'name' => 'Example'
+],
+

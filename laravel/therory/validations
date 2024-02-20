@@ -1,0 +1,182 @@
+validate the incoming data
+
+If the validation in the controller fails, an ValidaitonExceptional Error will be thrown otherwise it will run smooth
+
+1.  Starter
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|unique:posts|max:255',
+            'body' => 'required',
+        ]);
+        return redirect('/posts');
+    }
+    
+    We can also represent it in the mean of array (i.e) replace | by []
+    $validatedData = $request->validate([
+        'title' => ['required', 'unique:posts', 'max:255'],
+        'body' => ['required'],
+    ]);
+
+    **ValidateWithBag**
+    If the validation fails, the error will be stored within the named error bag
+    If we don't have the bag, the error will be thrown
+
+    $validatedData = $request->validateWithBag('post', [
+        'title' => ['required', 'unique:posts', 'max:255'],
+        'body' => ['required'],
+    ]);
+
+    **bail**
+        To stop the validation as soon as any validation got failed
+        $request->validate([
+            'title' => 'bail|required|unique:posts|max:255',
+            'body' => 'required',
+        ]);
+
+    **Nested Artibutes**
+        $request->validate([
+            'title' => 'required|unique:posts|max:255',
+            'author.name' => 'required',
+            'author.description' => 'required',
+        ]);
+
+    **If the name contains dot**
+        $request->validate([
+            'title' => 'required|unique:posts|max:255',
+            'v1\.0' => 'required',
+        ]);
+    
+    **Displaying the error in frontend**
+
+        <!-- /resources/views/post/create.blade.php -->
+        
+        <h1>Create Post</h1>
+        
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        
+        <!-- Create Post Form -->
+
+    **XHR Req and Validations**
+    When ever there is an error in an validation error, it will not directly send the response
+    Instead it will send JSON resp with 422 status code.
+
+    **@error**
+
+        <label for="title">Post Title</label>
+        
+        <input id="title"
+            type="text"
+            name="title"
+            class="@error('title') is-invalid @enderror">
+        
+        @error('title')
+            <div class="alert alert-danger">{{ $message }}</div>
+        @enderror
+
+    For named error bags
+    <!-- <input ... class="@error('title', 'post') is-invalid @enderror"> -->
+
+    **Invoking past details**
+    $title = $request->old('title');
+    <!-- <input type="text" name="title" value="{{ old('title') }}"> -->
+
+    **Nullable**
+    Here the nullable states that the publish_at can be null
+        $request->validate([
+            'title' => 'required|unique:posts|max:255',
+            'body' => 'required',
+            'publish_at' => 'nullable|date',
+        ]);
+    
+    **Validation Error Resp**
+    {
+        "message": "The team name must be a string. (and 4 more errors)",
+        "errors": {
+            "team_name": [
+                "The team name must be a string.",
+                "The team name must be at least 1 characters."
+            ],
+            "authorization.role": [
+                "The selected authorization.role is invalid."
+            ],
+            "users.0.email": [
+                "The users.0.email field is required."
+            ],
+            "users.2.email": [
+                "The users.2.email must be a valid email address."
+            ]
+        }
+    }
+
+2.  Creating form requests
+
+    php artisan make:request StorePostRequest
+
+    app/Http/Requests //location of the req
+
+    It will have two methods authorize and rules
+
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|unique:posts|max:255',
+            'body' => 'required',
+        ];
+    }
+
+    incoming req are validated before it reaches the controllers
+
+    **after**
+    this method will be invoked after the validation process is done
+    use Illuminate\Validation\Validator;
+    
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                if ($this->somethingElseIsInvalid()) {
+                    $validator->errors()->add(
+                        'field',
+                        'Something is wrong with this field!'
+                    );
+                }
+            }
+        ];
+    }
+
+    Used to stop the validation process
+    protected $stopOnFirstFailure = true;
+
+    When the validation fails
+    protected $stopOnFirstFailure = true;
+        or
+    protected $redirectRoute = 'dashboard';
+
+    **Cutomizing the error messages**
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'A title is required',
+            'body.required' => 'A message is required',
+        ];
+    }
+
+    **Customizing the validation attributes**
+    public function attributes(): array
+    {
+        return [
+            'email' => 'email address',
+        ];
+    }
+
+    

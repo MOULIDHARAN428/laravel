@@ -1,0 +1,495 @@
+Blades - front end to show the data
+
+/resources/views
+the data are sends to the blade using view
+stores the file as .blade.php
+
+1. Route::get('/', function () {
+        return view('welcome', ['name' => 'Samantha']);
+    });
+
+    The current UNIX timestamp is {{ time() }}.
+
+    blade will double encode the HTML entities, if we need to disable the encoding we could do by 
+    Blade::withoutDoubleEncoding method
+
+    namespace App\Providers;
+    lass AppServiceProvider extends ServiceProvider
+    {
+        public function boot(): void
+        {
+            Blade::withoutDoubleEncoding();
+        }
+    }
+
+    {{ $name }} are used to prevent XSS attacks
+    we can escape that by doing {!! $name !!}
+
+    Blade and Javascript
+    the Javascript will have @ symbols, however we use @@ and one @ will be removed by blade
+
+    @@if() will be converted into @if()
+
+    instead we can use @verbatim to skip prefix declarations
+    @verbatim
+        <div class="container">
+            Hello, {{ name }}.
+        </div>
+    @endverbatim
+
+2,  Structure
+
+    Conditional Statements
+    @if (count($records) === 1)
+        I have one record!
+    @elseif (count($records) > 1)
+        I have multiple records!
+    @else
+        I don't have any records!
+    @endif
+
+    If not the condition is true
+    @unless (Auth::check())
+        You are not signed in.
+    @endunless
+
+    Whether the variable is assigned
+    @isset($records)
+        // $records is defined and is not null...
+    @endisset
+    
+    if the variable is empty
+    @empty($records)
+        // $records is "empty"...
+    @endempty
+
+    If the user is authenticated
+    @auth
+        // The user is authenticated...
+    @endauth
+    
+    If the user is guest
+    @guest
+        // The user is not authenticated...
+    @endguest
+
+    //runs if the application runs in the production env
+    @production
+        // Production specific content...
+    @endproduction
+
+    To determine if the application is running in specific env
+    If env is running in / using staging
+    @env('staging')
+        // The application is running in "staging"...
+    @endenv
+    
+    If env is running in staging or production
+    @env(['staging', 'production'])
+        // The application is running in "staging" or "production"...
+    @endenv
+
+3.  Sections :
+
+    @hasSection('navigation')
+        <div class="pull-right">
+            @yield('navigation')
+        </div>
+    
+        <div class="clearfix"></div>
+    @endif
+
+    Section if it doesn't have any info
+    @sectionMissing('navigation')
+        <div class="pull-right">
+            @include('default-navigation')
+        </div>
+    @endif
+
+    If the session exists
+    @session('status')
+    <div class="p-4 bg-green-100">
+        {{ $value }}
+    </div>
+    @endsession
+
+4.  Switch Statements :
+    @switch($i)
+    @case(1)
+        First case...
+        @break
+ 
+    @case(2)
+        Second case...
+        @break
+ 
+    @default
+        Default case...
+        @break
+    @endswitch
+
+    For Loop : 
+    @for ($i = 0; $i < 10; $i++)
+    The current value is {{ $i }}
+    @endfor
+    
+    For each loop :
+    @foreach ($users as $user)
+        <p>This is user {{ $user->id }}</p>
+    @endforeach
+    
+    For-else loop :
+    @forelse ($users as $user)
+        <li>{{ $user->name }}</li>
+    @empty
+        <p>No users</p>
+    @endforelse
+    
+    While loop :
+    @while (true)
+        <p>I'm looping forever.</p>
+    @endwhile
+
+    break and continue :
+    @foreach ($users as $user)
+        @if ($user->type == 1)
+            @continue
+        @endif
+    
+        <li>{{ $user->name }}</li>
+    
+        @if ($user->number == 5)
+            @break
+        @endif
+
+    @endforeach
+
+    break and continue derivations:
+
+    @foreach ($users as $user)
+        @continue($user->type == 1)
+    
+        <li>{{ $user->name }}</li>
+    
+        @break($user->number == 5)
+    @endforeac
+    
+    Loop variables:
+    @foreach ($users as $user)
+        @if ($loop->first)
+            This is the first iteration.
+        @endif
+    
+        @if ($loop->last)
+            This is the last iteration.
+        @endif
+    
+        <p>This is user {{ $user->id }}</p>
+    @endforeach
+
+    loop->index 	    The index of the current loop iteration (starts at 0).
+    $loop->iteration 	The current loop iteration (starts at 1).
+    $loop->remaining 	The iterations remaining in the loop.
+    $loop->count 	    The total number of items in the array being iterated.
+    $loop->first 	    Whether this is the first iteration through the loop.
+    $loop->last 	    Whether this is the last iteration through the loop.
+    $loop->even 	    Whether this is an even iteration through the loop.
+    $loop->odd 	        Whether this is an odd iteration through the loop.
+    $loop->depth 	    The nesting level of the current loop.
+    $loop->parent       When in a nested loop, the parent's loop variable.
+
+ 5. Conditional class and style
+    
+    1.
+    @php
+    $isActive = false;
+    $hasError = true;
+    @endphp
+    
+    <span @class([
+        'p-4',
+        'font-bold' => $isActive,
+        'text-gray-500' => ! $isActive,
+        'bg-red' => $hasError,
+    ])></span>
+    
+    <span class="p-4 text-gray-500 bg-red"></span>
+    
+    2.
+    @php
+        $isActive = true;
+    @endphp
+    
+    <span @style([
+        'background-color: red',
+        'font-weight: bold' => $isActive,
+    ])></span>
+    
+    <span style="background-color: red; font-weight: bold;"></span>
+
+6.  Forms
+    
+    @checked variable variable used to know whether the checkbox is clicked or not
+    <input type="checkbox"
+        name="active"
+        value="active"
+        @checked(old('active', $user->active)) />
+    
+    Dropdown values of product.version, @selected holds the value
+    <select name="version">
+        @foreach ($product->versions as $version)
+            <option value="{{ $version }}" @selected(old('version') == $version)>
+                {{ $version }}
+            </option>
+        @endforeach
+    </select>
+    
+    disabled : button
+    <button type="submit" @disabled($errors->isNotEmpty())>Submit</button>
+    
+    Read only
+    <input type="email"
+        name="email"
+        value="email@laravel.com"
+        @readonly($user->isNotAdmin()) />
+    
+    Required
+    <input type="text"
+        name="title"
+        value="title"
+        @required($user->isAdmin()) />
+    
+    Adding Sub-Views
+    <div>
+        @include('shared.errors')
+        //@include('view.name', ['status' => 'complete']) for sending the info
+    
+        <form>
+            <!-- Form Contents -->
+        </form>
+    </div>
+    
+    Laravel throw an error if the view not found, so we can handle that by
+    @includeIf('view.name', ['status' => 'complete'])
+    
+    Includes if the boolean is true or false
+    @includeWhen($boolean, 'view.name', ['status' => 'complete'])
+    
+    @includeUnless($boolean, 'view.name', ['status' => 'complete'])
+
+    @each('view.name', $jobs, 'job','view.empty')
+    first arg  -> view name
+    second arg -> Array or Collections
+    third arg  -> variable in which the elements will be stored
+    fourtg arg -> optional, if the view doesn't exists
+    
+    Push js into page header using stacks
+    Once will happen one times per rendering cycle
+    @once
+        @push('scripts')
+            <script>
+                // Your custom JavaScript...
+            </script>
+        @endpush
+    @endonce
+    
+    @pushOnce('scripts')
+        <script>
+            // Your custom JavaScript...
+        </script>
+    @endPushOnce
+    
+    if we need to use raw php
+    @php
+        $counter = 1;
+    @endphp
+
+    comments
+    {{-- This comment will not be present in the rendered HTML --}}
+
+7.  Components
+    app/View/Components where the Components will be stored
+
+    to create components : php artisan make:component Alert
+    
+    Rendering Component : need kebab case (variable-name-should-have-hypen)
+    <x-alert/> alert component   
+    <x-user-profile/> user-profile component
+    <x-inputs.button/> button component under inputs
+
+    Rendering based on the conditions
+    public function shouldRender(): bool
+    {
+        return Str::length($this->message) > 0;
+    }
+
+    if the method returns false then the component won't render
+
+    Passing the arguments to the components, should pass all the constuctor variable and maybe anything in additonal too
+    <x-alert type="error" :message="$message"/>
+
+    class Alert extends Component
+    {
+        public function __construct(
+            public string $type,
+            public string $message,
+        ) {}
+    
+        public function render(): View
+        {
+            return view('components.alert');
+        }
+    }
+
+    Casing
+    
+    camelCase for the instance variable
+    public function __construct(
+        public string $alertType,
+    ) {}
+
+    kebab-case for refering arg names
+    <x-alert alert-type="danger" />
+    
+    Methods
+
+    public function isSelected(string $option): bool
+    {
+        return $option === $this->selected;
+    }
+
+    <option {{ $isSelected($value) ? 'selected' : '' }} value="{{ $value }}">
+        {{ $label }}
+    </option>
+
+    <x-button type="submit">
+        Submit
+    </x-button>
+
+    would be render as 
+    <button type="submit">
+        Submit
+    </button>
+
+    Filtering Functions
+
+    {{ $attributes->filter(fn (string $value, string $key) => $key == 'foo') }}
+    
+    Starts with
+    {{ $attributes->whereStartsWith('wire:model') }}
+
+    Doesn't starts with
+    {{ $attributes->whereDoesntStartWith('wire:model') }}
+
+    Contains Class
+    @if ($attributes->has('class'))
+        <div>Class attribute is present</div>
+    @endif
+
+    Multiple class
+    @if ($attributes->has(['name', 'class']))
+        <div>All of the attributes are present</div>
+    @endif
+
+    @if ($attributes->hasAny(['href', ':href', 'v-bind:href']))
+        <div>One of the attributes is present</div>
+    @endif
+
+    Retrieving attribute
+    {{ $attributes->get('class') }}
+
+8.  Slots
+
+    Slots : can pass additional content to the components via slots
+    <div class="alert alert-danger">
+        {{ $slot }}
+    </div>
+
+    Content with no slot name will be passed as slot
+    <x-alert>
+        <x-slot:title>
+            Server Error
+        </x-slot>
+    
+        <strong>Whoops!</strong> Something went wrong!
+    </x-alert>
+
+    Slots attributes
+    <x-card class="shadow-sm">
+        <x-slot:heading class="font-bold">
+            Heading
+        </x-slot>
+    
+        Content
+    
+        <x-slot:footer class="text-sm">
+            Footer
+        </x-slot>
+    </x-card>
+
+    @props([
+        'heading',
+        'footer',
+    ])
+    
+    <div {{ $attributes->class(['border']) }}>
+        <h1 {{ $heading->attributes->class(['text-lg']) }}>
+            {{ $heading }}
+        </h1>
+    
+        {{ $slot }}
+    
+        <footer {{ $footer->attributes->class(['text-gray-700']) }}>
+            {{ $footer }}
+        </footer>
+    </div>
+    
+    Inline Component views : for small components
+
+    public function render(): string
+    {
+        return <<<'blade'
+            <div class="alert alert-danger">
+                {{ $slot }}
+            </div>
+        blade;
+    }
+
+    php artisan make:component Alert --inline
+
+    Dynamic Components : render components on the realtime as the value is feed into component in real time
+
+    <x-dynamic-component :component="$componentName" class="mt-4" />
+
+9.  Extras
+
+    <html>
+        <head>
+            <title>{{ $title ?? 'Todo Manager' }}</title>
+        </head>
+        <body>
+            <h1>Todos</h1>
+            <hr/>
+            {{ $slot }}
+        </body>
+    </html>
+
+    <x-layout>
+        @foreach ($tasks as $task)
+            {{ $task }}
+        @endforeach
+    </x-layout>
+
+    Extending a layout
+
+    @extends('layouts.app')
+    @section('title', 'Page Title')
+    @section('sidebar')
+        @parent
+        <p>This is appended to the master sidebar.</p>
+    @endsection
+    @section('content')
+        <p>This is my body content.</p>
+    @endsection
+
+    

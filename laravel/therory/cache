@@ -1,0 +1,153 @@
+cache configuration located in 
+config/cache.php
+
+cache backend : redis, memcached
+
+1.  Database Cache Driver
+
+    Creating the table 
+
+    Schema::create('cache', function ($table) {
+        $table->string('key')->unique();
+        $table->text('value');
+        $table->integer('expiration');
+    });
+
+            or
+        
+    php artisan cache:table
+
+2.  Memocached
+
+    config/cache.php
+    'memcached' => [
+        [
+            'host' => '127.0.0.1',
+            'port' => 11211,
+            'weight' => 100
+        ],
+    ]
+    
+    if we assign the unix socket path to store cache then the port should be 0
+    'memcached' => [
+        [
+            'host' => '/var/run/memcached/memcached.sock',
+            'port' => 0,
+            'weight' => 100
+        ],
+    ],
+
+3.  Accessing the cache
+    
+    public function index()
+    {
+        $value = Cache::get('key');
+
+        //
+    }
+
+    $value = Cache::get('key', 'default');
+
+    $value = Cache::store('file')->get('foo');
+    
+    Cache::store('redis')->put('bar', 'baz', 10);
+
+    if (Cache::has('key')) {
+        //
+    }
+
+    Closure function
+
+    $value = Cache::get('key', function () {
+        return DB::table(...)->get();
+    });
+
+    Cache::increment('key');
+    Cache::increment('key', $amount);
+    Cache::decrement('key');
+    Cache::decrement('key', $amount);
+
+    Retrieve & Store
+    If the user doesn't exist in the cache, the user will be fetched from the database and store in the cache
+
+    $value = Cache::remember('users', $minutes, function () {
+        return DB::table('users')->get();
+    });
+
+    Retrieve and Delete
+    $value = Cache::pull('key');
+
+4.  Storing and Retrieving items in the cache
+
+    Cache::put('key', 'value', $minutes);
+
+    Store if not present
+    Cache::add('key', 'value', $minutes);
+
+    Store forever
+    Cache::forever('key', 'value');
+
+    Cache::forget('key');
+
+    Clear the entire cache
+    Cache::flush();
+
+    Cache::tags(['people', 'artists'])->put('John', $john, $minutes);
+    $john = Cache::tags(['people', 'artists'])->get('John');
+
+    flush all items that are assigned a tag or list of tags.
+    Cache::tags(['people', 'authors'])->flush();
+
+5.  Custom cache Drivers
+    namespace App\Extensions;
+    
+    use Illuminate\Contracts\Cache\Store;
+    
+    class MongoStore implements Store
+    {
+        public function get($key) {}
+        public function many(array $keys);
+        public function put($key, $value, $minutes) {}
+        public function putMany(array $values, $minutes);
+        public function increment($key, $value = 1) {}
+        public function decrement($key, $value = 1) {}
+        public function forever($key, $value) {}
+        public function forget($key) {}
+        public function flush() {}
+        public function getPrefix() {}
+    }
+
+    Register Cache
+    class CacheServiceProvider extends ServiceProvider
+    {
+        public function boot()
+        {
+            Cache::extend('mongo', function ($app) {
+                return Cache::repository(new MongoStore);
+            });
+        }
+        public function register()
+        {
+            //
+        }
+    }
+
+    Events
+    protected $listen = [
+        'Illuminate\Cache\Events\CacheHit' => [
+            'App\Listeners\LogCacheHit',
+        ],
+    
+        'Illuminate\Cache\Events\CacheMissed' => [
+            'App\Listeners\LogCacheMissed',
+        ],
+    
+        'Illuminate\Cache\Events\KeyForgotten' => [
+            'App\Listeners\LogKeyForgotten',
+        ],
+    
+        'Illuminate\Cache\Events\KeyWritten' => [
+            'App\Listeners\LogKeyWritten',
+        ],
+    ];
+    

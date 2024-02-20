@@ -1,0 +1,158 @@
+app/http/middleware
+
+Middleware is executed during the processing of an HTTP request. Middleware filters HTTP req that entering the applications. If the user is not authenticated, it redirects to the login page or if the user is aunthenticated then request will be proceed.
+
+Middleware can modify the request data before it reaches the controller or modify resp before it sends to the user
+
+command to create new middleware named EnsureTokenIsValis
+php artisan make:middleware EnsureTokenIsValid 
+
+class EnsureTokenIsValid
+{
+    public function handle(Request $request, Closure $next): Response // here closure will direct to next middleware
+    {
+        if ($request->input('token') !== 'my-secret-token') {
+            return redirect('home'); // If the token is not same as the secreat token, then it redirects to the home
+        }
+        return $next($request); // then the request is send to the process
+    }
+}
+
+To pass the request deeper into the application, we need to call $next($request)
+
+1. BeforeMiddleware : performs tasks before passing the req into the application : client -> server (Req)
+
+    class BeforeMiddleware
+    {
+        public function handle(Request $request, Closure $next): Response
+        {
+            // Perform action
+            return $next($request);
+        }
+    }
+
+2. AfterMiddleware : Performs after the application handles the request : server -> client (Response)
+
+    class AfterMiddleware
+    {
+        public function handle(Request $request, Closure $next): Response
+        {
+            $response = $next($request);
+            return $response;
+        }
+    }
+
+3. Assigning Middleware to Routes
+   
+   use App\Http\Middleware\Authenticate;
+ 
+    Route::get('/profile', function () {
+        // statement
+    })->middleware(Authenticate::class| [First::class,second::class]); // can have single MW or array of MW
+    First::class resolves to App\Http\Middleware\First::class
+
+    or we can define the middleware in the kernel and can use that name instead of the class name
+
+    kernel locates in app/http/kernel
+    'auth' => \App\Http\Middleware\Authenticate::class; // auth is the middleware name and the LHS is the class
+
+    Route::get('/profile', function () {
+        // ...
+    })->middleware(**'auth'**);
+
+4. Exclude the Middleware : we assigns middleware to the group of routes and sometimes we need to exclude some middleware   from specific routes
+
+    Exclude for specific URI in group
+    Route::middleware([EnsureTokenIsValid::class])->group(function () {
+        Route::get('/', function () {
+            // ...
+        });
+    
+        Route::get('/profile', function () {
+            // ...
+        })->withoutMiddleware([EnsureTokenIsValid::class]);
+    });
+
+    Exclude for entire group
+    Route::withoutMiddleware([EnsureTokenIsValid::class])->group(function () {
+        Route::get('/profile', function () {
+            // ...
+        });
+    });
+
+    profile URI : will excluded the middleware of EnsureTokenIsValid
+
+5. MiddleWare Groups, Instead of assigning lot of middleware to the routes, we can make a group and keep all middleware into them.
+    protected $middlewareGroups = [
+        'web' => [
+            \App\Http\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+    
+        'api' => [
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+    ];
+
+    For specific route
+    Route::get('/', function () {
+        // ...
+    })->middleware('web');
+    
+    For group of routes
+    Route::middleware(['web'])->group(function () {
+        // ...
+    });
+
+    **If middleware and middlewaregroup has same name, the middleware execution will takes place coz of higher precedence**
+
+6. Middleware Sorting : We could sometimes need the defined process to execute the middleware
+
+    protected $middlewarePriority = [
+        \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class, //high priorirty, executes first
+        \Illuminate\Cookie\Middleware\EncryptCookies::class, //second hifhest priority, executes after
+    ];
+
+7. Paramterized Middleware
+   
+    class EnsureUserHasRole
+    {
+        public function handle(Request $request, Closure $next, string $role): Response
+        {
+            if (! $request->user()->hasRole($role)) {
+                // Redirect...
+            }
+            return $next($request);
+        }
+    }
+    Route::put('/post/{id}', function (string $id) {
+        // ...
+    })->middleware('role:editor,publisher'); | middleware('role:edit'); // can have single or multiple parameter
+
+8. Terminal Middleware : to perform the work after the resp is sent from the server to client
+   Terminate method should receive both request and respone
+
+    class TerminatingMiddleware
+    {
+        public function handle(Request $request, Closure $next): Response
+        {
+            return $next($request);
+        }
+        public function terminate(Request $request, Response $response): void
+        {
+            // ...
+        }
+    }
+    //after creating terminate middleware, need to add to the list of routes in kernel
+
+    public function register(): void
+    {
+        $this->app->singleton(TerminatingMiddleware::class);
+    }
+    //singleton is used to create the instance of the class and reuse it : container
+

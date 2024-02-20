@@ -1,0 +1,141 @@
+* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+
+This Cron will call the Laravel command scheduler every minute. 
+When the schedule:run command is executed, Laravel will evaluate your scheduled tasks and runs the tasks that are due.
+
+Defining Schedules
+
+App\Console\Kernel
+
+class Kernel extends ConsoleKernel
+{
+    protected $commands = [
+        \App\Console\Commands\Inspire::class,
+    ];
+ 
+    protected function schedule(Schedule $schedule)
+    {
+        $schedule->call(function () {
+            DB::table('recent_users')->delete();
+        })->daily();
+    }
+}
+
+Can use artisan command to execute
+$schedule->command('emails:send --force')->daily();
+
+Can use componand class or name to execute
+$schedule->command(EmailsCommand::class, ['--force'])->daily();
+
+exec command may be used to issue a command to the operating system
+$schedule->exec('node /home/forge/script.js')->daily();
+
+Schedule Frequency : 
+
+cron('* * * * * *'); 	            Run the task on a custom Cron schedule
+->everyMinute(); 	                Run the task every minute
+->everyFiveMinutes();      	        Run the task every five minutes
+->everyTenMinutes(); 	            Run the task every ten minutes
+->everyThirtyMinutes(); 	        Run the task every thirty minutes
+->hourly(); 	                    Run the task every hour
+->hourlyAt(17); 	                Run the task every hour at 17 mins past the hour
+->daily(); 	                        Run the task every day at midnight
+->dailyAt('13:00'); 	            Run the task every day at 13:00
+->twiceDaily(1, 13); 	            Run the task daily at 1:00 & 13:00
+->weekly(); 	                    Run the task every week
+->monthly(); 	                    Run the task every month
+->monthlyOn(4, '15:00'); 	        Run the task every month on the 4th at 15:00
+->quarterly(); 	                    Run the task every quarter
+->yearly(); 	                    Run the task every year
+->timezone('America/New_York'); 	Set the timezone
+
+// Run once per week on Monday at 1 PM...
+$schedule->call(function () {
+    //
+})->weekly()->mondays()->at('13:00');
+ 
+// Run hourly from 8 AM to 5 PM on weekdays...
+$schedule->command('foo')
+          ->weekdays()
+          ->hourly()
+          ->timezone('America/Chicago')
+          ->between('8:00', '17:00');
+
+>weekdays(); 	            Limit the task to weekdays
+->sundays(); 	            Limit the task to Sunday
+->mondays(); 	            Limit the task to Monday
+->tuesdays(); 	            Limit the task to Tuesday
+->wednesdays(); 	        Limit the task to Wednesday
+->thursdays(); 	            Limit the task to Thursday
+->fridays(); 	            Limit the task to Friday
+->saturdays(); 	            Limit the task to Saturday
+->between($start, $end); 	Limit the task to run between start and end times
+->when(Closure);            Limit the task based on a truth test
+
+between and unless between
+
+$schedule->command('reminders:send')
+                    ->hourly()
+                    ->between('7:00', '22:00');
+
+$schedule->command('reminders:send')
+                    ->hourly()
+                    ->unlessBetween('23:00', '4:00');
+
+truth test contraints
+
+$schedule->command('emails:send')->daily()->when(function () {
+    return true;
+});
+
+$schedule->command('emails:send')->daily()->skip(function () {
+    return true;
+});
+
+preventing task overlaps
+
+$schedule->command('emails:send')->withoutOverlapping();
+
+maintenance mode
+
+to run the tasks even in maintenance mode
+$schedule->command('emails:send')->evenInMaintenanceMode();
+
+Sending the output of the task to file
+
+$schedule->command('emails:send')
+         ->daily()
+         ->sendOutputTo($filePath);
+
+append
+
+$schedule->command('emails:send')
+         ->daily()
+         ->appendOutputTo($filePath);
+
+mail the output of the task
+
+$schedule->command('foo')
+         ->daily()
+         ->sendOutputTo($filePath)
+         ->emailOutputTo('foo@example.com');
+
+Task hooks
+
+$schedule->command('emails:send')
+         ->daily()
+         ->before(function () {
+             // Task is about to start...
+         })
+         ->after(function () {
+             // Task is complete...
+         });
+
+pinging the URL
+
+$schedule->command('emails:send')
+         ->daily()
+         ->pingBefore($url)
+         ->thenPing($url);
+
+for pinging the url we need to have gazzel HTTP library

@@ -1,0 +1,195 @@
+Responses : all routes and controllers should return a response back to the client
+
+use Illuminate\Http\Response
+
+public function exampleResponse()
+{
+    $content = '<h1>Hello, Laravel!</h1>';
+    $status = 200;
+    $headers = [
+        'Content-Type' => 'text/html',
+        'Cache-Control' => 'no-store',
+    ];
+    
+    return response($content, $status, $headers)
+        ->cookie('name', 'John', 60)
+        ->header('X-Custom-Header', 'Custom Value');
+}
+
+1.  Route::get('/', function () {
+        return 'Hello World';
+    }); // the string resp will be automatically converts into HTTP resp
+
+2.  Route::get('/', function () {
+        return [1, 2, 3];
+    }); // the array will convert into JSON resp
+
+3.  Sending Eloquent Models and Collections
+    we can also return the eloquent models which will be automatically convert it into array
+
+    Route::get('/user/{user}', function (User $user) {
+        return $user;
+    });
+
+4.  **Headers** : contains the meta data
+
+    Series of headers
+    return response($content)
+            ->header('Content-Type', $type)
+            ->header('X-Header-One', 'Header Value')
+            ->header('X-Header-Two', 'Header Value');
+    
+    Array of headers
+    return response($content)
+            ->withHeaders([
+                'Content-Type' => $type,
+                'X-Header-One' => 'Header Value',
+                'X-Header-Two' => 'Header Value',
+            ]);
+    
+5.  **Cache Control Middleware**
+    Route::middleware('cache.headers:public;max_age=2628000;etag')->group(function () {
+        Route::get('/privacy', function () {
+            // ...
+        });
+    
+        Route::get('/terms', function () {
+            // ...
+        });
+    });
+
+    the contents should be in snake case and the values should be seperated by semi-column ;
+    etag are used to check whether the the cache is changed or not
+
+6.  **Attaching cookies to responses**
+
+    return response('Hello World')->cookie(
+        'name', 'value', $minutes
+    );
+
+    return response('Hello World')->cookie(
+        'name', 'value', $minutes, $path, $domain, $secure, $httpOnly
+    );
+
+    **Queue of Cookies**
+    the cookies will be sent along with the resp whenever we are sending resp
+
+    use Illuminate\Support\Facades\Cookie;
+    Cookie::queue('name', 'value', $minutes);
+
+    **Generating Cookies Instance**
+    $cookie = cookie('name', 'value', $minutes);
+    return response('Hello World')->cookie($cookie);
+
+    **Expiring cookies**
+    return response('Hello World')->withoutCookie('name');
+
+    for an instance
+    Cookie::expire('name');
+
+    **Encryption**
+    The cookies are encryted and signed and it can't be modified by the client
+    If we req not to encrypt we can have except property
+
+    use app\Http\Middleware\EncryptCookies
+    protected $except = [
+        'cookie_name',
+    ];
+
+7. **Redirecting**
+    instance of Illuminate\Http\RedirectResponse class
+
+    Redirecting to dashboard page
+    Route::get('/dashboard', function () {
+        return redirect('home/dashboard');
+    });
+
+    To redirect back to the page with the inputs
+    Route::post('/user/profile', function () {       
+        return back()->withInput();
+    });
+
+    using route name
+    return redirect()->route('login');
+
+    when the route has parameters, you need to pass them as second parameters
+    return redirect()->route('profile', ['id' => 1]);
+
+    **Redirecting to the controller action**
+
+    return redirect()->action([UserController::class, 'index']);
+    
+    If controller requires parameters
+    return redirect()->action(
+        [UserController::class, 'profile'], ['id' => 1]
+    );
+
+    **Redirecting to external domains**
+    return redirect()->away('https://www.google.com');
+
+    **Redirecting with flashed session data**
+    Route::post('/user/profile', function () {
+        // ...
+        return redirect('dashboard')->with('status', 'Profile updated!');
+    });
+
+    For displaying the flashed message using Blade
+    @if (session('status'))
+        <div class="alert alert-success">
+            {{ session('status') }}
+        </div>
+    @endif
+
+8.  **Other Responses**
+
+    **View**
+    return response()
+    ->view('hello', $data, 200)
+    ->header('Content-Type', $type);
+
+    **JSON**
+    Automatically set the Content-Type header to application/json, convert array to JSON using the json_encode func
+
+    return response()->json([
+        'name' => 'Abigail',
+        'state' => 'CA',
+    ]);
+
+    return response()
+    ->json(['name' => 'Abigail', 'state' => 'CA'])
+    ->withCallback($request->input('callback'));
+
+    **File downloads**
+    return response()->download($pathToFile);   
+    return response()->download($pathToFile, $name, $headers);
+
+    **File Response**
+    return response()->file($pathToFile);   
+    return response()->file($pathToFile, $headers);
+
+    **Streamed Downloads**
+    Donwloads from specific site, not need to download to the disk
+
+    return response()->streamDownload(function () {
+        echo GitHub::api('repo')
+                    ->contents()
+                    ->readme('laravel', 'laravel')['contents'];
+    }, 'laravel-readme.md');
+
+    laravel-readme.md from the laravel/laravel repo
+
+    **Macro Resp**
+    Creating custom resp that can be reused in many routes and controllers
+    This method should be called from the boot method
+
+    class AppServiceProvider extends ServiceProvider
+    {
+        public function boot(): void
+        {
+            Response::macro('caps', function (string $value) {
+                return Response::make(strtoupper($value));
+            });
+        }
+    }
+
+    return response()->caps('foo');

@@ -1,0 +1,738 @@
+php artisan make:model User
+
+app dict
+
+to generate database migration when you generate model
+php artisan make:model User --migration
+php artisan make:model User -m
+
+Flight model to retrieve and store info from the flights database table
+class Flight extends Model
+{
+    //
+}
+
+Naming convention
+Flight model stores the info in flights table
+
+class Flight extends Model
+{
+    protected $table = 'my_flights';
+}
+
+Primary Key for the table will be default as ID. If we need to change primary key, we can use $primaryKey
+Also the primary key will keeps on incrementing as it has the property of auto incrementing
+If we not need this we should assign $incrementing as false
+
+Eloqurnt ORM expects the created_at and updated_at columns to exits in table
+If we don't have those col, we mat assign $timestamps as false
+
+If we have different col for created_at and updated_at, we can handle that by
+
+class Flight extends Model
+{
+    const CREATED_AT = 'creation_date';
+    const UPDATED_AT = 'last_update';
+}
+
+customizing data format
+
+class Flight extends Model
+{
+    protected $dateFormat = 'U';
+}
+
+By default the Eloquent modle will connect to the default table
+to change the connection to the other database
+protected $connection = 'connection-name';
+
+1.  retrieve model
+
+    use App\Flight;
+    $flights = App\Flight::all();
+    foreach ($flights as $flight) {
+        echo $flight->name;
+    }
+
+    $flights =  App\Flight::where('active', 1)
+                ->orderBy('name', 'desc')
+                ->take(10)
+                ->get();
+    
+    Collections
+
+    $flights = $flights->reject(function ($flight) {
+        return $flight->cancelled;
+    });
+
+    foreach ($flights as $flight) {
+        echo $flight->name;
+    }
+
+    Chunk : to conserve memory
+    Flight::chunk(200, function ($flights) {
+    foreach ($flights as $flight) {
+            //
+        }
+    });
+
+    Cursor : to interate through the entire database, reduces memory usage
+    foreach (Flight::where('foo', 'bar')->cursor() as $flight) {
+        //
+    }
+
+    retrieving
+    the primary key is 1
+    $flight = App\Flight::find(1);
+
+    $flight = App\Flight::where('active', 1)->first();
+
+    array of primary key
+    $flights = App\Flight::find([1, 2, 3]);
+
+    $model = App\Flight::findOrFail(1);
+    
+    $model = App\Flight::where('legs', '>', 100)->firstOrFail();
+
+    Route::get('/api/flights/{id}', function ($id) {
+        return App\Flight::findOrFail($id);
+    });
+
+    $count = App\Flight::where('active', 1)->count();
+    
+    $max = App\Flight::where('active', 1)->max('price');
+
+2.  Store
+    
+    use App\Flight;
+    public function store(Request $request)
+    { 
+        $flight = new Flight;
+        $flight->name = $request->name;
+        $flight->save();
+    }
+
+    Update
+    
+    $flight = App\Flight::find(1);
+    $flight->name = 'New Flight Name';
+    $flight->save();
+
+    Mass Update
+    App\Flight::where('active', 1)
+          ->where('destination', 'San Diego')
+          ->update(['delayed' => 1]);
+    
+    The table with the col value name will be allowed to mass update
+    class Flight extends Model
+    {
+        protected $fillable = ['name'];
+    }
+
+    // This is allowed
+    $flight = Flight::create(['name' => 'Flight 123']);
+
+    // This is not allowed
+    $flight = Flight::create(['name' => 'Flight 123', 'status' => 'delayed']);
+    
+    This values should not be mass edited
+    protected $guarded = ['price'];
+
+    firstOrCreate : if record found, it will return the record else it will create new record in database
+    // Retrieve the flight by the attributes, or create it if it doesn't exist...
+    $flight = App\Flight::firstOrCreate(['name' => 'Flight 10']);
+    
+    firstOrNew : if record found, it will return the record else it will create modle and not stored in database
+    // Retrieve the flight by the attributes, or instantiate a new instance...
+    $flight = App\Flight::firstOrNew(['name' => 'Flight 10']);
+
+    Update or create
+    // If there's a flight from Oakland to San Diego, set the price to $99.
+    // If no matching model exists, create one.
+    $flight = App\Flight::updateOrCreate(
+        ['departure' => 'Oakland', 'destination' => 'San Diego'],
+        ['price' => 99]
+    );
+
+    Delete Model
+    $flight = App\Flight::find(1);
+    $flight->delete();
+
+    App\Flight::destroy(1);   
+    App\Flight::destroy([1, 2, 3]);
+    App\Flight::destroy(1, 2, 3);
+
+    $deletedRows = App\Flight::where('active', 0)->delete();
+
+    ->>> Soft Delete <<<-
+    
+    Soft Delete : the data are not premenantly deleted
+    these are removed from the database but stored in same table
+    it will have additional col named deleted_at to notify it has soft deleted
+    We need to enable the soft delete by adding the deleted_at col with date property in Illuminate\Database\Eloquent\SoftDeletes trait
+
+    class Flight extends Model
+    {
+        use SoftDeletes;
+        protected $dates = ['deleted_at'];
+    }
+
+    Schema::table('flights', function ($table) {
+        $table->softDeletes();
+    });
+
+
+    if ($flight->trashed()) {
+        //
+    }
+
+    to check whether table has any soft deletes
+    if ($flight->trashed()) {
+        //
+    }
+
+    ->>>Soft delete vs Hard Delete<<<-
+    Both have same delete method to delete
+    Soft delete : when we have deleted_at col
+    Hard delete : when we don't have deleted_at col
+
+    Identifying the soft deleted tuples
+
+    retrieve not deleted + soft deleted items
+    $flights =  App\Flight::withTrashed()
+                ->where('account_id', 1)
+                ->get();
+    
+    $flight->history()->withTrashed()->get();
+
+    retrieve only deleted items
+    $flights = App\Flight::onlyTrashed()
+                ->where('airline_id', 1)
+                ->get();
+    
+    Restoring the soft deleted models
+    $flight->restore();
+    
+    App\Flight::withTrashed()
+        ->where('airline_id', 1)
+        ->restore();
+    
+    $flight->history()->restore();
+
+    premenantly delete the soft models
+    // Force deleting a single model instance...
+    $flight->forceDelete();
+    
+    // Force deleting all related models...
+    $flight->history()->forceDelete();
+
+3.  Query Scopes : scopes are used to encapsulate common query logic into reusable components
+
+    namespace App\Scopes; there will be no scopes folder 
+    class AgeScope implements Scope
+    {
+        public function apply(Builder $builder, Model $model)
+            {
+                $builder->where('age', '>', 200);
+            }
+    }
+
+    1.  Global Scope
+        They can be registered globally to apply certain constraints to all queries for a specific model
+        Global scopes are useful for enforcing certain conditions across the entire application
+
+        class PublishedScope implements Scope
+        {
+            public function apply(Builder $builder, Model $model)
+            {
+                $builder->where('published', true);
+            }
+        }
+        // Applying global scope in the model
+        class Post extends Model
+        {
+            protected static function booted()
+            {
+                static::addGlobalScope(new PublishedScope);
+            }
+        }
+
+
+    2.  Local Scope
+        Local scopes are methods defined directly on the Eloquent model
+        They allow you to define query constraints within the context of the model
+        Local scopes are commonly used to create expressive and reusable query constraints for specific tasks.
+        
+        class Post extends Model
+        {
+            public function scopePublished($query)
+            {
+                return $query->where('published', true);
+            }
+        }
+        // Usage of local scope
+        $publishedPosts = Post::published()->get();
+
+4.  Relationships
+    
+    ->>>> One to One relations <<<<<-
+    
+    user model - phone
+    we can place phone method on user modal
+
+    phone method should has hasOne method
+    
+    namespace App;
+    use Illuminate\Database\Eloquent\Model;
+
+    class User extends Model
+    {
+        public function phone()
+        {
+            return $this->hasOne('App\Phone');
+        }
+    }
+
+    $phone = User::find(1)->phone;
+    
+    usually the foreign key will be assigned by the laravel
+    for phone the foreign key will be user_id
+    we can override this by
+    return $this->hasOne('App\Phone', 'foreign_key');
+
+    local_key is the col form the user that maps to the foreign_key to the phone table
+    return $this->hasOne('App\Phone', 'foreign_key', 'local_key');
+
+    Inverse relations
+    now we can access user through their phone number, previously we access phone number via user 
+     
+    class Phone extends Model
+    {
+        public function user()
+        {
+            return $this->belongsTo('App\User');
+        }
+    }
+    return $this->belongsTo('App\User', 'foreign_key');
+    return $this->belongsTo('App\User', 'foreign_key', 'other_key');
+
+    ->>>>>> One To Many <<<<<<<-
+
+    single model owns any amount of other models
+
+    class Post extends Model
+    {
+        public function comments()
+        {
+            return $this->hasMany('App\Comment');
+        }
+    }
+    foreign key the laravel will take it as post_id
+
+    $comments = App\Post::find(1)->comments;
+    foreach ($comments as $comment) {
+    }
+    $comments = App\Post::find(1)->comments()->where('title', 'foo')->first();
+
+    foreign key:
+    return $this->hasMany('App\Comment', 'foreign_key'); 
+    return $this->hasMany('App\Comment', 'foreign_key', 'local_key');
+
+    One to Many Inverse Relationship
+    class Comment extends Model
+    {
+        public function post()
+        {
+            return $this->belongsTo('App\Post');
+        }
+    }
+
+    $comment = App\Comment::find(1);
+    return $this->belongsTo('App\Post', 'foreign_key');
+    return $this->belongsTo('App\Post', 'foreign_key', 'other_key');
+
+    ->>>>>>> Many to Many <<<<<<<<-
+    Link two table alphabetically
+
+    Let's consider three table : users, roles, role_user
+    User-*Role Role-*Users
+
+    class User extends Model
+    {
+        public function roles()
+        {
+            return $this->belongsToMany('App\Role');
+        }
+    }
+    $user = App\User::find(1);
+    foreach ($user->roles as $role) {
+    }
+    $roles = App\User::find(1)->roles()->orderBy('name')->get();
+
+    override the conversion of the alphabetically mapping, we can use second argument
+    return $this->belongsToMany('App\Role', 'role_user');
+
+    user_id current model foreign key and role_id is the foreign key is joinning table col
+    return $this->belongsToMany('App\Role', 'role_user', 'user_id', 'role_id');
+
+    Inverse Relationship
+    class Role extends Model
+    {
+        public function users()
+        {
+            return $this->belongsToMany('App\User');
+        }
+    }
+    $user = App\User::find(1);
+    foreach ($user->roles as $role) {
+        echo $role->pivot->created_at;
+    }
+
+    Pivot table with extra attributes
+    return $this->belongsToMany('App\Role')->withPivot('column1', 'column2');
+    
+    inorder pivot table to maintaine created_at and updated_at, use the withTimestamps method
+    return $this->belongsToMany('App\Role')->withTimestamps();
+
+    Filtering
+    return $this->belongsToMany('App\Role')->wherePivot('approved', 1);   
+    return $this->belongsToMany('App\Role')->wherePivotIn('priority', [1, 2]);
+
+    ->>>>>> Has many through <<<<<<-
+
+    Find the posts in country
+    countries
+        id - integer
+        name - string
+
+    users
+        id - integer
+        country_id - integer
+        name - string
+
+    posts
+        id - integer
+        user_id - integer
+        title - string
+    
+    class Country extends Model
+    {
+        public function posts()
+        {
+            return $this->hasManyThrough('App\Post', 'App\User');
+        }
+    }
+
+    or
+
+    class Country extends Model
+    {
+        public function posts()
+        {
+            return $this->hasManyThrough(
+                'App\Post', 'App\User',
+                'country_id', 'user_id', 'id'
+            );
+        }
+    }
+
+    3rd arg : intermediate table id, 4th arg final table id, 5th arg local table argument
+
+    country.id -> user.country_id -> post.user_id
+
+
+    ->>>>>>>>> Polymorphic Relations <<<<<<<<<<<<-
+
+    Polymorphic relations allow a model to belong to more than one other model on a single association.
+    users can comment on both posts and videos
+
+    posts
+        id - integer
+        title - string
+        body - text
+    
+    videos
+        id - integer
+        title - string
+        url - string
+    
+    comments
+        id - integer
+        body - text
+        commentable_id - integer : posts / videos ID
+        commentable_type - string : posts/video, how ORM defines
+
+        use Illuminate\Database\Eloquent\Model;
+ 
+        class Comment extends Model
+        {
+            public function commentable()
+            {
+                return $this->morphTo();
+            }
+        }
+        class Post extends Model
+        {
+            public function comments()
+            {
+                return $this->morphMany('App\Comment', 'commentable');
+            }
+        }
+        class Video extends Model
+        {
+            public function comments()
+            {
+                return $this->morphMany('App\Comment', 'commentable');
+            }
+        }
+
+
+    retrieving Polymorphic relations
+
+    $post = App\Post::find(1);
+ 
+    foreach ($post->comments as $comment) {
+        
+    }
+
+    $comment = App\Comment::find(1);   
+    $commentable = $comment->commentable;
+
+    Custom Polymorphic Types
+
+    use Illuminate\Database\Eloquent\Relations\Relation;
+    Relation::morphMap([
+        'posts' => 'App\Post',
+        'videos' => 'App\Video',
+    ]);
+
+    ->>>>>>>>>> Many to Many Polymorphic Relations <<<<<<<<<<-
+
+    posts
+        id - integer
+        name - string
+    
+    videos
+        id - integer
+        name - string
+    
+    tags
+        id - integer
+        name - string
+    
+    taggables
+        tag_id - integer
+        taggable_id - integer
+        taggable_type - string
+    
+    class Post extends Model
+    {
+        public function tags()
+        {
+            return $this->morphToMany('App\Tag', 'taggable');
+        }
+    }
+
+    class Tag extends Model
+    {
+        public function posts()
+        {
+            return $this->morphedByMany('App\Post', 'taggable');
+        }
+        public function videos()
+        {
+            return $this->morphedByMany('App\Video', 'taggable');
+        }
+    }
+
+    $post = App\Post::find(1);
+    foreach ($post->tags as $tag) {
+    }
+    $tag = App\Tag::find(1);
+    foreach ($tag->videos as $video) {
+    }
+
+    has
+
+    Retrieve all posts that have at least one comment...
+    $posts = App\Post::has('comments')->get();
+    
+    Retrieve all posts that have three or more comments...
+    $posts = Post::has('comments', '>=', 3)->get();
+    
+    Retrieve all posts that have at least one comment with votes...
+    $posts = Post::has('comments.votes')->get();
+    
+    Retrieve all posts with at least one comment containing words like foo%
+    $posts = Post::whereHas('comments', function ($query) {
+        $query->where('content', 'like', 'foo%');
+    })->get();
+
+    doesntHave
+
+    $posts = App\Post::doesntHave('comments')->get();
+    $posts = Post::whereDoesntHave('comments', function ($query) {
+        $query->where('content', 'like', 'foo%');
+    })->get();
+
+    $posts = App\Post::withCount('comments')->get();
+    foreach ($posts as $post) {
+        echo $post->comments_count;
+    }
+
+    Attaching
+
+    add roleID in user table
+    $user = App\User::find(1);   
+    $user->roles()->attach($roleId);
+
+    $user->roles()->attach($roleId, ['expires' => $expires]);
+
+    Detach
+    $user->roles()->detach($roleId);
+
+    detach all roles from the user
+    $user->roles()->detach();
+
+    $user = App\User::find(1);   
+    $user->roles()->detach([1, 2, 3]);
+    $user->roles()->attach([1 => ['expires' => $expires], 2, 3]);
+
+    save
+
+    add comment to the post
+
+    $comment = new App\Comment(['message' => 'A new comment.']);
+    $post = App\Post::find(1);
+    $post->comments()->save($comment);
+
+    adding many comments
+    $post = App\Post::find(1);
+    $post->comments()->saveMany([
+        new App\Comment(['message' => 'A new comment.']),
+        new App\Comment(['message' => 'Another comment.']),
+    ]);
+
+5.  Collections
+    all sets returned by Eloquent are instance of Collections obj, even the sets returned by GET method
+    Collections are much more powerful than array
+
+    $users = App\User::where('active', 1)->get();
+ 
+    foreach ($users as $user) {
+        echo $user->name;
+    }
+
+    Remove the users who are inactive and return the active users name
+
+    $users = App\User::where('active', 1)->get();
+ 
+    $names = $users->reject(function ($user) {
+        return $user->active === false;
+    })
+    ->map(function ($user) {
+        return $user->name;
+    });
+
+6.  Accessors & Mutators
+
+    Accessors : Accessors are methods defined on an Eloquent model that are used to retrieve attribute values.
+
+    class User extends Model
+    {
+        public function getFullNameAttribute()
+        {
+            return $this->attributes['first_name'] . ' ' . $this->attributes['last_name'];
+        }
+    }
+
+    $user = User::find(1);
+    echo $user->full_name; // Access the full_name attribute
+
+    Mutators : Mutators are methods used to set attribute values before storing them in the database.
+
+    class User extends Model
+    {
+        public function setFirstNameAttribute($value)
+        {
+            $this->attributes['first_name'] = ucfirst($value);
+        }
+    }
+
+    $user = new User;
+    $user->first_name = 'john'; // Mutator is automatically called to set the value
+
+    Attribute Casting
+    $casts property should be an array where 
+    the key is the name of the attribute being cast
+    the value is the type you wish to cast the column to
+
+    cast types : integer, real, float, double, string, boolean, object, array, collection, date, datetime, and timestamp.
+    class User extends Model
+    
+    {
+        protected $casts = [
+            'is_admin' => 'boolean',
+        ];
+    }
+
+    JSON array type casting
+     
+    class User extends Model
+    {
+        protected $casts = [
+            'options' => 'array',
+        ];
+    }
+
+    $user = App\User::find(1);
+    $options = $user->options;
+    $options['key'] = 'value';
+    $user->options = $options;
+    $user->save();
+
+7.  Serialization
+    When building API, we need to convert model relations to arrays or JSON
+
+    Serializing to array
+
+    all attributes and all relations (including the relations of relations) will be converted to arrays:
+
+    $user = App\User::with('roles')->first();   
+    return $user->toArray();
+
+    Serializing to JSON
+
+    $user = App\User::find(1);
+    return $user->toJson();
+
+    $user = App\User::find(1);   
+    return (string) $user; // it will call toJson method
+
+    Hidding the attributes from JSON
+    class User extends Model
+    {
+        protected $hidden = ['password']; // the value should not be dynamic property name
+    }
+
+    Visible : to define the white-list of attribute
+    class User extends Model
+    {
+        protected $visible = ['first_name', 'last_name'];
+    }
+
+    Temporary hiding property
+    return $user->makeVisible('attribute')->toArray();
+    return $user->makeHidden('attribute')->toArray();
+
+    Appending values to the JSON
+    
+    public function getIsAdminAttribute()
+    {
+        return $this->attributes['admin'] == 'yes';
+    }
+
+    need to add the accessors in the append, should be snake case
+    protected $appends = ['is_admin'];
+
+    

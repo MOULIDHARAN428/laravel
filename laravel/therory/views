@@ -1,0 +1,100 @@
+Views provides us the way to return HTML docs
+
+Stores in resources/views dic
+Views are compiled on demand
+
+1.  **View Template**
+
+    <html>
+        <body>
+            <h1>Hello, {{ $name }}</h1>
+        </body>
+    </html>
+    
+    We can also return the global view 
+    Route::get('/', function () {
+        return view('greeting', ['name' => 'James']);
+    });
+
+    Inertia provides us the way to write code for the react or vue app
+
+2.  **Creating and Rendering Views**
+
+    php artisan make:view greeting
+    .blade.php extensions have blade code
+
+    return View::make('greeting', ['name' => 'James']);
+
+    Route::get('/', function () {
+        return view('greeting', ['name' => 'James']);
+    });
+
+    **Nested view**
+    view dir name should not contain dot
+    return view('admin.profile', $data); 
+
+    **Passing Data in Views**
+    return view('greetings', ['name' => 'Victoria']);
+
+    return view('greeting')
+            ->with('name', 'Victoria')
+            ->with('occupation', 'Astronaut');
+    
+    **Check if the view exists**
+    View::exists('admin.profile')
+
+    **Sharing the data with all views**
+    We need to use share method of the view in the boot function
+    In this func the key and value pair will be shared among the views
+
+    class AppServiceProvider extends ServiceProvider
+    {
+        public function boot(): void
+        {
+            View::share('key', 'value');
+        }
+    }
+
+3.  **View Composers**
+    Useful when multiple route and controllers returns same view
+    class ViewServiceProvider extends ServiceProvider
+    {
+        public function boot(): void
+        {
+            // Using class based composers...
+            Facades\View::composer('profile', ProfileComposer::class);
+    
+            // Using closure based composers...
+            Facades\View::composer('welcome', function (View $view) {
+                // ...
+            });
+    
+            Facades\View::composer('dashboard', function (View $view) {
+
+            });
+        }
+    }
+
+    **Attaching composers to multiple views**
+    View::composer(
+        ['profile', 'dashboard'],
+        MultiComposer::class
+    );
+
+    **Attach composers to all views**
+    Facades\View::composer('*', function (View $view) {
+        // ...
+    });
+
+    **View Creators**
+    executed immediately after the view is instantiated
+    View::creator('profile', ProfileCreator::class);
+
+4.  **Cache**
+    As the views are compiled on demand, it can take some time to render which makes a negative impact
+    So we can use cache to store the compiled views
+
+    php artisan view:cache // creating the cache
+    php artisan view:clear // clearing the cache
+
+    

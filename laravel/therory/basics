@@ -1,0 +1,53 @@
+PHP -> 7.3.33
+Laravel -> 5.8
+
+1. The php version should matched the version of laravel, to support installation and development. Laravel supports PHP version from 7.1.3 to 7.4
+
+2. Composer is the package manager same as NPM
+
+3. To create laravel project : composer create-project --prefer-dist laravel/laravel your-project-name "5.8.*" or
+                               composer create-project laravel/laravel example-app  
+
+4. To start laravel project : php artisan serve, server need to br restart when we edit routers, config, env files
+
+5. Sail (Command line interface - CLI) a docker used in laravel. 
+
+6. Laravel can be used as an full-stack framework by pacakges like inertia and livewire.
+
+7. php artisan env:encrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF ; to encrypt the env file, --key[encrypt_key], we can or can't have have the encrytion key option
+   php artisan env:decrypt --key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF ;
+
+8. php artisan config:cache : caching configuration files, it will boost the speed of the application
+
+9. While maintainance of the server, we can do "php artisan down", which makes the applications disable while we updating.
+   we can have php artisan down --secret="1630542a-246b-4b66-afa1-dd72a4c43515", a secret key will byepass the maintainance,
+   we can redirect to any pages php artisan down --redirect=/ or we could show error messages.
+
+10. Middleware sits as an intermediary layer between application and OS, network or DB. Sits b/w web server and application framework. Can interept and process HTTP req and resp. Undergoes the process of authentication, logging, data manipulation, or access control.
+
+11. **Blade** provides the syntax that ease the use of coding. Blade provides simple texts that can be used instead. For static sites.
+
+12. Laravel **Livewire** : Fullstack framework without leaving the conformt of laravel, rely on blade template
+
+13. **Inertia.js** : used for single page applications, uses vue.js 
+
+14. **Laravel Breeze** : simple starting point for building a laravel app with authentications, powered by blade and tailwind
+
+15. **Jetstream** is a powerful tool for Laravel developers, especially when building applications that require user authentication, teams, and modern frontend interactions. It streamlines common development tasks and provides a solid foundation for building robust web applications.
+
+16. Deployment :Autoloader optimization to load files faster "composer install --optimize-autoloader --no-dev" 
+                Caching conifg , can be used to retrieve the config file faster
+                Caching events, caching routes, caching views
+                Laravel Forge : creats server on various infrastructure
+                laravel Vapor : serverless, auto-scaling deployment
+17. Redis : stores cache, session, queue system
+
+18. smix_pusher : websockets, notifications, real-time broadcasting
+
+19. **Singleton** : single instance of class is created and reused whenever is requested.
+
+20. namespace used to refer to where the code belongs to
+
+21. use App\Models\User; the file will use the user class from the app/models folder
+
+22. Cookies will be invalid if the value is changed by the client

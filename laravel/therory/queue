@@ -1,0 +1,162 @@
+$
+Queue backend : Beanstalk, Amazon SQS, Redis, Relational Database
+
+config/queue.php
+
+// This job is sent to the default queue...
+dispatch(new Job);
+ 
+// This job is sent to the "emails" queue...
+dispatch((new Job)->onQueue('emails'));
+
+queue  with higher priority :
+
+php artisan queue:work --queue=high,default
+
+To use Relational Database queue we need table to hold the jobs
+
+php artisan queue:table
+ 
+php artisan migrate
+
+1.  Creating Job classes
+    
+    app/Jobs
+    php artisan make:job SendReminderEmail
+
+    class ProcessPodcast implements ShouldQueue
+    {
+        use InteractsWithQueue, Queueable, SerializesModels;
+    
+        protected $podcast;
+    
+        public function __construct(Podcast $podcast)
+        {
+            $this->podcast = $podcast;
+        }
+    
+        public function handle(AudioProcessor $processor)
+        {
+            // Process uploaded podcast...
+        }
+    }
+
+    handle method is called whenever the job is processed in the queue
+    the process is serialized
+
+    Dispatch : add the process into the queue
+    dispatch(new ProcessPodcast($podcast));
+
+    Delayed Dispatch
+    $job = (new ProcessPodcast($podcast))
+            ->delay(Carbon::now()->addMinutes(10));
+
+    dispatch($job);
+
+    Dispatch to particular queue
+    $job = (new ProcessPodcast($podcast))->onQueue('processing');
+    
+    dispatch($job);
+
+    Dispatching to particular connecitons
+    connections : Beanstalk, Amazon SQS, Redis, Relational Database
+    public function store(Request $request)
+    {
+        $job = (new ProcessPodcast($podcast))->onConnection('sqs');
+ 
+        dispatch($job);
+    }
+
+    Chaining the methods with queue and connections
+    $job = (new ProcessPodcast($podcast))
+                ->onConnection('sqs')
+                ->onQueue('processing');
+    
+2.  Running Queue Worker : The queue will be running until the terminal is closed
+    To run permenantly in bg, we can use process monitor
+
+    Starts the process of the default queue
+    php artisan queue:work
+    
+    Process the jobs in redis queue
+    php artisan queue:work redis
+    
+    Emails queue from redis will be processed
+    php artisan queue:work redis --queue=emails
+    
+    Priotiy of the jobs
+    dispatch((new Job)->onQueue('high'));
+
+    php artisan queue:work --queue=high,low
+
+    If we edit the code for the queue, we need to restart the queue
+    php artisan queue:restart
+
+    Time after which the process will be killed
+    php artisan queue:work --timeout=60
+
+    Time how much the worker will sleep if queue is empty
+    php artisan queue:work --sleep=3
+
+    retry_after : if the process is not deleted within 90 it will be add back into the queue
+    the retry_after time will should be the time taken the process to complete
+    php artisan queue:work --retry_after=90
+
+3.  Supervisor
+    sudo apt-get install supervisor
+
+4.  Dealing with failed jobs
+    Maximum time the jobs can be tried
+
+    php artisan queue:work redis --tries=3
+    
+    If the job is failed the failed method will handle those especially to clean, the exception will contain the reason why the job fails
+    class ProcessPodcast implements ShouldQueue
+    {
+        use InteractsWithQueue, Queueable, SerializesModels;
+        protected $podcast;
+        public function __construct(Podcast $podcast)
+        {
+            $this->podcast = $podcast;
+        }
+        public function handle(AudioProcessor $processor)
+        {
+            // Process uploaded podcast...
+        }
+        public function failed(Exception $exception)
+        {
+            // Send user notification of failure, etc...
+        }
+    }
+
+    Event when the job gets failed
+    class AppServiceProvider extends ServiceProvider
+    {
+        public function boot()
+        {
+            Queue::failing(function (JobFailed $event) {
+                // $event->connectionName
+                // $event->job
+                // $event->exception
+            });
+        }
+        public function register()
+        {
+            //
+        }
+    }
+
+    Failed jobs will be inserted into failed_jobs DB table
+
+    Retry the jobID
+    php artisan queue:retry 5
+
+    php artisan queue:retry all
+
+    Delete the job
+    php artisan queue:forget 5
+
+    To delete all jobs
+    php artisan queue:flush
+
+    

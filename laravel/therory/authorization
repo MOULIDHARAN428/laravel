@@ -1,0 +1,152 @@
+Determine if a user is authorized to perform a given action
+
+public function boot()
+{
+    $this->registerPolicies();
+ 
+    Gate::define('update-post', function ($user, $post) {
+        return $user->id == $post->user_id;
+    });
+}
+
+1.  App\Providers\AuthServiceProvider
+    public function boot()
+    {
+        $this->registerPolicies();
+    
+        Gate::define('update-post', function ($user, $post) {
+            return $user->id == $post->user_id;
+        });
+    }
+
+    if (Gate::allows('update-post', $post)) {
+        // The current user can update the post...
+    }
+    
+    if (Gate::denies('update-post', $post)) {
+        // The current user can't update the post...
+    }
+
+    if (Gate::forUser($user)->allows('update-post', $post)) {
+        // The user can update the post...
+    }
+    
+    if (Gate::forUser($user)->denies('update-post', $post)) {
+        // The user can't update the post...
+    }
+
+2.  Policies
+    if the application is a blog, you may have a Post model and a corresponding PostPolicy to authorize user actions 
+    such as creating or updating posts
+
+    php artisan make:policy PostPolicy
+
+    If we need the CURD operations
+    php artisan make:policy PostPolicy --model=Post
+
+    After creating policy we need to register it, helps laravel which policy to utilize when authorizing actions against model
+
+    class AuthServiceProvider extends ServiceProvider
+    {
+        protected $policies = [
+            Post::class => PostPolicy::class,
+        ];
+        public function boot()
+        {
+            $this->registerPolicies();
+    
+            //
+        }
+    }
+
+3.  Writing Policy
+
+    class PostPolicy
+    {
+        public function update(User $user, Post $post)
+        {
+            return $user->id === $post->user_id;
+        }
+    }
+
+    Methods without models
+    As any authenticated user can upload the file
+
+    public function create(User $user)
+    {
+        //
+    }
+
+    Policy Filters
+    For assigning the admin and give authorization for all process
+    true  -> authorize for all process
+    false -> authorize for no process
+    null  -> authorize fall under policy
+    public function before($user, $ability)
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+    }
+
+4.  Authorizing Actions Using Policies
+
+    if ($user->can('update', $post)) {
+        //
+    }
+
+    if ($user->cant('update', $post)) {
+        //
+    }
+
+    use App\Post;
+    if ($user->can('create', Post::class)) {
+        // Executes the "create" method on the relevant policy...
+    }
+
+    Via Middleware
+    can:firstArg,secondArg
+    firstArg  : authorize
+    secondArg : route parameter
+    Route::put('/post/{post}', function (Post $post) {
+        // The current user may update the post...
+    })->middleware('can:update,post');
+
+    Create doesn't need any modals
+    Route::post('/post', function () {
+        // The current user may create posts...
+    })->middleware('can:create,App\Post');
+
+    public function create(Request $request)
+    {
+        $this->authorize('create', Post::class);
+    }
+
+
+    @can('update', $post)
+    <!-- The Current User Can Update The Post -->
+    @elsecan('create', $post)
+        <!-- The Current User Can Create New Post -->
+    @endcan
+    
+    @cannot('update', $post)
+        <!-- The Current User Can't Update The Post -->
+    @elsecannot('create', $post)
+        <!-- The Current User Can't Create New Post -->
+    @endcannot
+
+    @if (Auth::user()->can('update', $post))
+    <!-- The Current User Can Update The Post -->
+    @endif
+    
+    @unless (Auth::user()->can('update', $post))
+        <!-- The Current User Can't Update The Post -->
+    @endunless
+
+    @can('create', Post::class)
+    <!-- The Current User Can Create Posts -->
+    @endcan
+    
+    @cannot('create', Post::class)
+        <!-- The Current User Can't Create Posts -->
+    @endcannot

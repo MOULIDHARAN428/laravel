@@ -1,0 +1,47 @@
+CSRF : Cross-Rite Request Forgeries, usually used in forms
+Blocks the edit from the unauthorized user,generated CSRF tokens for the active session
+CSRF token not used in get http methods, as we are not changing any contents
+
+1. Declaring
+
+Route::get('/token', function (Request $request) {
+    $token = $request->session()->token();
+
+    $token = csrf_token(); //generated the csrf tokens
+
+    // ...
+});
+
+when we have post, put, patch, delete >>> http methods, we should include _token field in the form
+
+<form method="POST" action="/profile">
+    @csrf
+ 
+    <!-- Equivalent to... -->
+    <input type="hidden" name="_token" value="{{ csrf_token() }}" />
+</form>
+
+2.  Excluding the CSRF : example when we use strip to carry out payments and to use webhooks, we need to exclude CSRF, 
+    because stripe doesn't knows what CSRF token needs to be send.
+
+    Place in app\Providers\RouteServiceProvider outside web middleware to applies to the all routers
+
+    class VerifyCsrfToken extends Middleware
+    {
+        protected $except = [
+            'stripe/*',
+            'http://example.com/foo/bar',
+            'http://example.com/foo/*',
+        ];
+    }
+
+    the above URI are not checked with csrf token
+
+4. X-XSRF-TOKEN
+   included with every with each form resp(client->server), can stores the token in cookie as it will automatically place its value in 
+   X-XSRF-TOKEN header.
+
+5. X-CSRF-TOKEN : http header, transmit CSRF token from client to server
+
+X-CSRF-TOKEN and X-XSRF-TOKEN are value or token sent to the server via header and validate in the server to know
+whether the user is authenticated or not. 

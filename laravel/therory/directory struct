@@ -1,0 +1,21 @@
+Root Dir
+
+1. APP : core code of the application, 
+
+2. Bootstap : houses a cache dir, we shouldn't modify this files
+
+3. Config : contains all of the applicaiton config files
+
+4. DB : contains database migrations, model factories, and seeds, Ican hold an SQLite database.
+
+5. Public : contains index.php which is an entry point for all req,house of assets (image, JS, CSS)
+
+6. Resources : contains your views as well as your raw, un-compiled assets such as CSS or JavaScript
+
+7. Routes : Contains all route definitions
+
+8. Storage : contains your logs, compiled blade templates
+
+9. Tests : Consists automated test, suffixed with Test, can test by "php artisan test"
+
+10. Vendor : contains composer dependency 

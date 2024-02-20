@@ -1,0 +1,44 @@
+Encrypt
+
+public function storeSecret(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+    $user->fill([
+        'secret' => encrypt($request->secret)
+    ])->save();
+}
+
+Decrypt
+
+try {
+    $decrypted = decrypt($encryptedValue);
+} catch (DecryptException $e) {
+    //
+}
+
+Hashing
+
+LoginController and RegisterController will do the encrypt on its own
+Bcrypt is choice for hashing passwords
+
+1.  Basic Usage
+    
+    class UpdatePasswordController extends Controller
+    {
+        public function update(Request $request)
+        {
+            $request->user()->fill([
+                'password' => Hash::make($request->newPassword)
+            ])->save();
+        }
+    }
+
+2.  Verify the password against hash
+    if (Hash::check('plain-text', $hashedPassword)) {
+        // The passwords match...
+    }
+
+3.  Checking if a password hash has been altered
+    if (Hash::needsRehash($hashed)) {
+        $hashed = Hash::make('plain-text');
+    }
