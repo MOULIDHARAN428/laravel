@@ -20,11 +20,17 @@ class AdminMiddleware
         Auth::shouldUse('api');
         $user = Auth::user();
         if (!isset($user)){
-            return response('Log in please.', 403);
+            return response()->json([
+                "ok" => true,
+                "message" => "Log in please"
+            ], 403);
         }
         $user = User::where('email', $user->email)->first();
         if (!isset($user)){
-            return response('User is Not admin.', 403);
+            return response()->json([
+                "ok" => true,
+                "message" => "User not present"
+            ], 403);
         }
         if ($user->isAdmin == 1) {
             return $next($request);

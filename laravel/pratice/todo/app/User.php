@@ -50,8 +50,8 @@ class User extends Authenticatable
             $response = ["message" =>'User hasn\'t logged in'];
             return response($response, 401);
         }
-        $user = $user->id;
-        self::where('id',$user)
+        $user_id = $user->id;
+        self::where('id',$user_id)
                 ->delete();
         $response = ["message" =>'User has been deleted'];
         return response($response, 200);

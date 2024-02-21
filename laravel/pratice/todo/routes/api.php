@@ -47,35 +47,35 @@ Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); /
 
 Route::prefix('task')->group(function () {
     // GET
-    Route::get('/','TaskController@get_task'); //done
+    Route::get('/','TaskController@get_task'); 
 
-    Route::get('/{task_id}','TaskController@get_specific_task'); //done
+    Route::get('/{task_id}','TaskController@get_specific_task'); 
 
-    Route::get('/mapping/{user_id}','TaskController@get_user_task'); //done
+    Route::get('/mapping/{user_id}','TaskController@get_user_task'); // need to test
 
     Route::middleware('auth:api')->group(function () {
         // POST
-        Route::post('/','TaskController@create_task'); //done
+        Route::post('/','TaskController@create_task'); 
 
-        Route::post('/mapping/status/{task_map_id}','TaskController@edit_map_status'); //done
+        Route::post('/mapping/status/{task_map_id}','TaskController@edit_map_status'); 
 
         
         Route::middleware('admin')->group(function () {
 
-            Route::post('/mapping','TaskController@assign_task'); //done
+            Route::post('/mapping','TaskController@assign_task'); 
 
-            Route::post('/mapping/{task_map_id}','TaskController@edit_map_task'); //done
+            Route::post('/mapping/{task_map_id}','TaskController@edit_map_task'); 
 
-            Route::post('/status/{task_id}','TaskController@edit_status_admin'); //done
+            Route::post('/status/{task_id}','TaskController@edit_status_admin');
 
             // DELETE
-            Route::delete('/{task_id}','TaskController@delete_task'); //done
+            Route::delete('/{task_id}','TaskController@delete_task'); 
 
-            Route::delete('/mapping/{task_map_id}','TaskController@delete_map'); //done
+            Route::delete('/mapping/{task_map_id}','TaskController@delete_map');
         
         });
 
-        Route::post('/{task_id}','TaskController@edit_task'); //done
+        Route::post('/{task_id}','TaskController@edit_task'); 
 
     });
 
