@@ -103,6 +103,12 @@ class TaskController extends Controller
                 "message" => "Role is Required!"
             ], 200);
         }
+        if(!isset($request['assigned_at'])){
+            return response()->json([
+                "ok" => false,
+                "message" => "Assign Time is Required!"
+            ], 200);
+        }
         
         $task = Task::where('id',($request['task_id']))->first();
         if(!isset($task)){

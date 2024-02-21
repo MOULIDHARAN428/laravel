@@ -27,6 +27,7 @@ class TaskMapping extends Model
         $task_map->task_id = $map_data['task_id'];
         $task_map->user_id = $map_data['user_id'];
         $task_map->role = $map_data['role'];
+        $task_map->assigned_at = $map_data['assigned_at'];
         $task_map->save();
         return $task_map;
     }
@@ -52,6 +53,12 @@ class TaskMapping extends Model
             self::where('id', $task_map_id)
                     ->update(['role' => $map_data['role']]);
             $edited_details .= "role ";
+        }
+
+        if(isset($map_data['assigned_at'])){
+            self::where('id', $task_map_id)
+                    ->update(['assigned_at' => $map_data['assigned_at']]);
+            $edited_details .= "assigned_at ";
         }
         
         if(isset($map_data['status']) && $map_data['status']==false){

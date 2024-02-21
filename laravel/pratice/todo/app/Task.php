@@ -47,6 +47,10 @@ class Task extends Model
         if(isset($task_data['parent_id'])){
             $task->parent_id = $task_data['parent_id'];
         }
+
+        if(isset($task_data['due_time'])){
+            $task->due_time = $task_data['due_time'];
+        }
         
         $task->save();
         return $task;
@@ -80,6 +84,12 @@ class Task extends Model
                     ->update(['parent_id' => $task_data['parent_id']]);
             $edited_details .= "parent_id, ";
         }
+
+        if(isset($task_data['due_time'])){
+            self::where('id', $task_id)
+                    ->update(['due_time' => $task_data['due_time']]);
+            $edited_details .= "due_time, ";
+        }
         
         $task =  Task::find($task_id);
         return $task;
@@ -108,11 +118,19 @@ class Task extends Model
     
     public static function delete_task($task_id)
     {
-        self::where('id', $task_id)
-            ->delete();
+        $subTaskID = self::where('parent_id', $task_id)
+                    ->pluck('id')
+                    ->toArray();
 
-        TaskMapping::where('task_id',$task_id)
-                ->delete();
+        array_push($subTaskID, $task_id);
+        dd($subTaskID);
+        foreach($subTaskID as $taskID){
+            self::where('id', $taskID)
+                  ->delete();
+
+            TaskMapping::where('task_id',$taskID)
+                         ->delete();
+        }
 
         return 'Task with it\'s sub-task are deleted';
     }
