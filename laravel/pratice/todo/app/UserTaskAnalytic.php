@@ -44,4 +44,23 @@ class UserTaskAnalytic extends Model
                             ->pluck('quaterly_complete_task');
         return $completed_task/($completed_task+$yet_to_do);
     }
+
+    public function weekly_incompleted_task_ratio($user_id){
+        $yet_to_do = $this->yet_to_do($user_id);
+        $completed_task = self::where('user_id',$user_id)
+                            ->pluck('weekly_complete_task');
+        return $yet_to_do/($completed_task+$yet_to_do);
+    }
+    public function monthly_incompleted_task_ratio($user_id){
+        $yet_to_do = $this->yet_to_do($user_id);
+        $completed_task = self::where('user_id',$user_id)
+                            ->pluck('monthly_complete_task');
+        return $yet_to_do/($completed_task+$yet_to_do);
+    }
+    public function yearly_incompleted_task_ratio($user_id){
+        $yet_to_do = $this->yet_to_do($user_id);
+        $completed_task = self::where('user_id',$user_id)
+                            ->pluck('quaterly_complete_task');
+        return $yet_to_do/($completed_task+$yet_to_do);
+    }
 }

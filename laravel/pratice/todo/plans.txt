@@ -1,3 +1,12 @@
+Cron Job
+Schedule creation : for due_task, weekly, monthly and quaterly
+Command creation
+Email templete : task map creation, edit, delete
+Queue : Email
+
+eamil : mail verification and reset password links
+
+
 user_id
 yet_to_do_task
 due_task
@@ -13,4 +22,3 @@ due_task : task_scheduling daily at 23:59
 weekly : assign 0 weekly sunday at 23:59
 monthly : assign 0 monthy last date at 23:59
 quaterly : assign 0 quaterly last date of march,july,december at 23:59
-

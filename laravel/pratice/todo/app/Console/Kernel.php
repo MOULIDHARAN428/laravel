@@ -26,6 +26,15 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+
+        $schedule->command('task:due')->daily();
+        
+        $schedule->command('task:weeklyUpdate')->weekly();
+
+        $schedule->command('task:monthlyUpdate')->monthly();
+
+        $schedule->command('task:quaterlyUpdate')->quarterly();
+
     }
 
     /**
