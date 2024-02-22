@@ -5,18 +5,19 @@ namespace App;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\TaskMapping;
+use Illuminate\Support\Facades\DB;
 
 class Task extends Model
 {
     use SoftDeletes;
     public function task_mappings(){
-        return $this->hasMany(TaskMapping::class,'id','task_id');
+        return $this->hasMany(TaskMapping::class,'task_id','id');
     }
 
     // Relationship: One-to-Many (Child Tasks)
     public function child_tasks()
     {
-        return $this->hasMany(Task::class, 'parent_id', 'id');
+        return $this->hasMany(Task::class, 'id', 'parent_id');
     }
     
     // Relationship: Many-to-One (Parent Task)
@@ -128,8 +129,17 @@ class Task extends Model
             self::where('id', $taskID)
                   ->delete();
 
+            $usersID = TaskMapping::where('task_id', $taskID)
+                        ->pluck('user_id')
+                        ->toArray();
+
             TaskMapping::where('task_id',$taskID)
                          ->delete();
+            
+            foreach($usersID as $userID){
+                UserTaskAnalytic::where('user_id', $userID)
+                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
+            }
         }
 
         return 'Task with it\'s sub-task are deleted';

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Task;
 use App\User;
+use Illuminate\Support\Facades\DB;
 
 class TaskMapping extends Model
 {
@@ -29,6 +30,11 @@ class TaskMapping extends Model
         $task_map->role = $map_data['role'];
         $task_map->assigned_at = $map_data['assigned_at'];
         $task_map->save();
+        
+        //incrementing the yet_to_do task
+        UserTaskAnalytic::where('user_id', $map_data['user_id'])
+                        ->update(['yet_to_do_task' => DB::raw('yet_to_do_task + 1')]);
+        
         return $task_map;
     }
 
@@ -44,8 +50,17 @@ class TaskMapping extends Model
         }
 
         if(isset($map_data['user_id'])){
+            $userID = self::where('id', $task_map_id)->pluck('user_id');
             self::where('id', $task_map_id)
                     ->update(['user_id' => $map_data['user_id']]);
+
+            //decrement
+            UserTaskAnalytic::where('user_id', $userID)
+                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
+
+            //increment
+            UserTaskAnalytic::where('user_id', $map_data['user_id'])
+                        ->update(['yet_to_do_task' => DB::raw('yet_to_do_task + 1')]);
             $edited_details .= "user_id ";
         }
         
@@ -82,6 +97,7 @@ class TaskMapping extends Model
                     'status' => $status,
                     'time_completed' => date("Y-m-d H:i:s")
                 ]);
+            
         }
         else{
             self::where('id',$task_map_id)
@@ -97,7 +113,10 @@ class TaskMapping extends Model
 
     public static function delete_task_map($task_map_id)
     {
-
+        $userID = self::where('id',$task_map_id)
+                    ->pluck('user_id');
+        UserTaskAnalytic::where('user_id', $userID)
+                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
         self::where('id', $task_map_id)
             ->delete();
 

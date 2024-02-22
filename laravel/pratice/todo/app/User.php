@@ -5,7 +5,6 @@ namespace App;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Passport\HasApiTokens;
@@ -40,9 +39,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
     public function task_mappings(){
-        return $this->hasMany(TaskMapping::class,'id','user_id');
+        return $this->hasMany(TaskMapping::class,'user_id','id');
+    }
+    public function user_task_analytics(){
+        return $this->hasOne(UserTaskAnalytic::class,'user_id','id');
     }
     public function delete_user_account(Request $request){
         $user = Auth::user();

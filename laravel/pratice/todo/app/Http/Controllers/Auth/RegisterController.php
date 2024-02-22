@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
+use App\UserTaskAnalytic;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
@@ -78,6 +79,12 @@ class RegisterController extends Controller
             $profile_picture = $path;
         }
         $newUser->save();
+        $userID = $newUser->id;
+        
+        // creating the user analytics for the user
+        $task_analytics = new UserTaskAnalytic();
+        $task_analytics->user_id = $userID;
+        $task_analytics->save();
 
         return response()->json(['message' => 'User registered successfully'], 201);
     }

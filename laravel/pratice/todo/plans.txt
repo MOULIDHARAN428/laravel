@@ -1,0 +1,16 @@
+user_id
+yet_to_do_task
+due_task
+completed_task
+weekly_complete_task
+monthly_complete_task
+quaterly_complete_task
+
+complete ratio	  = CT/(CT+YTD+DT)
+incomplete ratio  = (YTD+DT)/(CT+YTD)
+
+due_task : task_scheduling daily at 23:59
+weekly : assign 0 weekly sunday at 23:59
+monthly : assign 0 monthy last date at 23:59
+quaterly : assign 0 quaterly last date of march,july,december at 23:59
+

@@ -159,6 +159,14 @@ class TaskController extends Controller
             ], 400);
         }
 
+        $status = TaskMapping::where('id',$task_map_id)->pluck('status');
+        if($status){
+            return response()->json([
+                "ok" => false,
+                "message" => "User task is finished!",
+            ], 400);
+        }
+
         if(isset($request['task_id'])){
             //checking whether the task id is present in database
             $task = Task::where('id',($request['task_id']))->first();
