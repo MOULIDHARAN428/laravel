@@ -5,7 +5,6 @@ namespace App;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\TaskMapping;
-use Illuminate\Support\Facades\DB;
 
 class Task extends Model
 {
@@ -138,7 +137,7 @@ class Task extends Model
             
             foreach($usersID as $userID){
                 UserTaskAnalytic::where('user_id', $userID)
-                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
+                        ->decrement('yet_to_do_task');
             }
         }
 

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Task;
 use App\User;
-use Illuminate\Support\Facades\DB;
 
 class TaskMapping extends Model
 {
@@ -33,7 +32,7 @@ class TaskMapping extends Model
         
         //incrementing the yet_to_do task
         UserTaskAnalytic::where('user_id', $map_data['user_id'])
-                        ->update(['yet_to_do_task' => DB::raw('yet_to_do_task + 1')]);
+                        ->increment('yet_to_do_task');
         
         return $task_map;
     }
@@ -56,11 +55,11 @@ class TaskMapping extends Model
 
             //decrement
             UserTaskAnalytic::where('user_id', $userID)
-                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
+                        ->decrement('yet_to_do_task');
 
             //increment
             UserTaskAnalytic::where('user_id', $map_data['user_id'])
-                        ->update(['yet_to_do_task' => DB::raw('yet_to_do_task + 1')]);
+                        ->increment('yet_to_do_task');
             $edited_details .= "user_id ";
         }
         
@@ -92,6 +91,16 @@ class TaskMapping extends Model
         
         // update
         if($status=='1'){
+            $userID = self::where('id',$task_map_id)
+                    ->pluck('user_id');
+            
+            UserTaskAnalytic::where('user_id', $userID)
+                    ->decrement('yet_to_do_task')
+                    ->increment('weekly_complete_task')
+                    ->increment('monthly_complete_task')
+                    ->increment('quaterly_complete_task')
+                    ->increment('completed_task');
+
             self::where('id',$task_map_id)
                 ->update([
                     'status' => $status,
@@ -100,6 +109,14 @@ class TaskMapping extends Model
             
         }
         else{
+            $userID = self::where('id',$task_map_id)
+                    ->pluck('user_id');
+            UserTaskAnalytic::where('user_id', $userID)
+                ->increment('yet_to_do_task')
+                ->decrement('weekly_complete_task')
+                ->decrement('monthly_complete_task')
+                ->decrement('quaterly_complete_task');
+            
             self::where('id',$task_map_id)
                 ->update([
                     'status' => $status,
@@ -116,7 +133,7 @@ class TaskMapping extends Model
         $userID = self::where('id',$task_map_id)
                     ->pluck('user_id');
         UserTaskAnalytic::where('user_id', $userID)
-                        ->update(['yet_to_do_task' => max(0, DB::raw('yet_to_do_task - 1'))]);
+                        ->decrement('yet_to_do_task');
         self::where('id', $task_map_id)
             ->delete();
 

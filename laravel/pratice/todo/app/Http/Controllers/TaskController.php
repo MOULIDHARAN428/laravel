@@ -272,6 +272,17 @@ class TaskController extends Controller
                 "message" => "No such task map ID is found!",
             ], 400);
         }
+
+        //delete should be done only if the status is false
+        $status = TaskMapping::where('id',$task_map_id)
+                    ->pluck('status');
+        if($status){
+            return response()->json([
+                "ok" => false,
+                "message" => "Task is completed can't delete now!",
+            ], 400);
+        }
+        
         $message = TaskMapping::delete_task_map($task_map_id);
         return response()->json([
             "ok" => true,
