@@ -2,10 +2,14 @@
 
 namespace App;
 
+use App\Mail\TaskAssigned;
+use App\Mail\TaskDeleted;
+use App\Mail\TaskEdited;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Task;
 use App\User;
+use Illuminate\Support\Facades\Mail;
 
 class TaskMapping extends Model
 {
@@ -24,12 +28,18 @@ class TaskMapping extends Model
 
     public function send_task_assign_mail($user,$task,$map){
         //name, map_id, task_title, role, due_time, assigned time
+
+        Mail::to($user['email'])->send(new TaskAssigned($task,$user,$map));
     }
     public function send_task_delete_mail($user,$task,$map){
         //name, map_id, task_title, role
+
+        Mail::to($user['email'])->send(new TaskDeleted($task,$user,$map));
     }
     public function send_task_edit_mail($user,$task,$map){
         //name, email, title, due_time, $map['id'],role, assigned_at
+
+        Mail::to($user['email'])->send(new TaskEdited($task,$user,$map));
     }
 
     public static function create_task_map($map_data){
@@ -57,12 +67,12 @@ class TaskMapping extends Model
     public static function edit_map_task($map_data,$task_map_id){
 
         $edited_details = "";
-        $edit_key_value = [];
-        $edit_key_value['id'] = $task_map_id;
+        $mapID = $task_map_id;
         //task_id, user_id, role, status, completed_at
         if(isset($map_data['task_id'])){
             self::where('id', $task_map_id)
                     ->update(['task_id' => $map_data['task_id']]);
+            $mapID = $map_data['task_id'];
             $edited_details .= "task_id ";
         }
 
@@ -92,20 +102,21 @@ class TaskMapping extends Model
             UserTaskAnalytic::where('user_id', $map_data['user_id'])
                         ->increment('yet_to_do_task');
             $edited_details .= "user_id ";
+
+            $task_map = self::find($task_map_id);
+            return $task_map;
         }
         
         if(isset($map_data['role'])){
             self::where('id', $task_map_id)
                     ->update(['role' => $map_data['role']]);
             $edited_details .= "role ";
-            $edit_key_value['role'] = $map_data['role'];
         }
 
         if(isset($map_data['assigned_at'])){
             self::where('id', $task_map_id)
                     ->update(['assigned_at' => $map_data['assigned_at']]);
             $edited_details .= "assigned_at ";
-            $edit_key_value['assigned_at'] = $map_data['assigned_at'];
         }
         
         if(isset($map_data['status']) && $map_data['status']==false){
@@ -115,11 +126,12 @@ class TaskMapping extends Model
                         'time_completed' => date("Y-m-d H:i:s")
                     ]);
         }
-        
+
         $ID = Self::where('id',$task_map_id)->get(['user_id','task_id']);
         $user = User::where('id',$ID['userID'])->pluck(['name','email']);
         $task = Task::where('id',$ID['task_id'])->pluck('title','due_time');
-        Self::send_task_edit_mail($user,$task,$edit_key_value);
+        $map = Self::find($mapID);
+        Self::send_task_edit_mail($user,$task,$map);
 
         $task_map = self::find($task_map_id);
         return $task_map;

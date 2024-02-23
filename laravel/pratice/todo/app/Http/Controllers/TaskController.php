@@ -12,15 +12,6 @@ class TaskController extends Controller
 {
 
     //CRUD
-    public function task_edit(){
-        return view('emails.task_edit');
-    }
-    public function task_assigned(){
-        return view('emails.task_assigned');
-    }
-    public function task_delete(){
-        return view('emails.task_delete');
-    }
     public function get_task(){
         $task_count = Task::count();
         if($task_count==0){
@@ -200,6 +191,13 @@ class TaskController extends Controller
                     "message" => "No such user is found",
                 ], 400);
             }
+        }
+        if(isset($request['user_id']) && (isset($request['task_id']) || isset($request['role']) || 
+        isset($request['assigned_at']) || isset($request['status']))){
+            return response()->json([
+                "ok" => false,
+                "message" => "user id and other map details should be edited separately",
+            ], 400);
         }
 
         $task_map = TaskMapping::edit_map_task($request,$task_map_id);
