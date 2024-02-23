@@ -33,9 +33,6 @@ Route::get('/plain',function(){
 //     return "admin...";
 // })->middleware('admin');
 
-Route::get('/assign','');
-Route::get('/delete','');
-Route::get('/edit','');
 
 
 Route::middleware('auth:api')->get('/users', function (Request $request) {

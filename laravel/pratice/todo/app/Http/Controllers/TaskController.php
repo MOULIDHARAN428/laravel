@@ -12,6 +12,15 @@ class TaskController extends Controller
 {
 
     //CRUD
+    public function task_edit(){
+        return view('emails.task_edit');
+    }
+    public function task_assigned(){
+        return view('emails.task_assigned');
+    }
+    public function task_delete(){
+        return view('emails.task_delete');
+    }
     public function get_task(){
         $task_count = Task::count();
         if($task_count==0){
@@ -81,7 +90,6 @@ class TaskController extends Controller
             ], 200);
 
         }
-
         $task = Task::create_task($request);
         return response()->json([
             "ok" => true,

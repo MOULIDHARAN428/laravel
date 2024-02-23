@@ -22,6 +22,16 @@ class TaskMapping extends Model
         return $task;
     }
 
+    public function send_task_assign_mail($user,$task,$map){
+        //name, map_id, task_title, role, due_time, assigned time
+    }
+    public function send_task_delete_mail($user,$task,$map){
+        //name, map_id, task_title, role
+    }
+    public function send_task_edit_mail($user,$task,$map){
+        //name, email, title, due_time, $map['id'],role, assigned_at
+    }
+
     public static function create_task_map($map_data){
         $task_map = new TaskMapping();
         $task_map->task_id = $map_data['task_id'];
@@ -34,13 +44,21 @@ class TaskMapping extends Model
         UserTaskAnalytic::where('user_id', $map_data['user_id'])
                         ->increment('yet_to_do_task');
         
+        //mail
+        //data : user-name, task_title, role, assigned_at, due_time
+        $user_name = User::where('id',$map_data['user_id'])->pluck(['name','email']);
+        $task = Task::where('id',$map_data['task_id'])->pluck(['title','due_time']);
+
+        self::send_task_assign_mail($user_name,$task,$map_data);
+        
         return $task_map;
     }
 
     public static function edit_map_task($map_data,$task_map_id){
 
         $edited_details = "";
-        
+        $edit_key_value = [];
+        $edit_key_value['id'] = $task_map_id;
         //task_id, user_id, role, status, completed_at
         if(isset($map_data['task_id'])){
             self::where('id', $task_map_id)
@@ -52,6 +70,19 @@ class TaskMapping extends Model
             $userID = self::where('id', $task_map_id)->pluck('user_id');
             self::where('id', $task_map_id)
                     ->update(['user_id' => $map_data['user_id']]);
+
+            //delete
+            // $user_name,$task_map_id,$task_details
+            // name, map_id, task_title, role
+            $task = Task::where('id',$map_data['task_id'])->pluck(['title','due_time']);
+            $map  = Self::where('id',$task_map_id)->pluck(['id','role','assigned_at']); 
+            $user_name_delete = User::where('id',$map_data['user_id'])->pluck(['name','email']);
+
+            Self::send_task_delete_mail($user_name_delete,$task,$map);
+            //create
+            $user_name_create = User::where('id',$map_data['user_id'])->pluck(['name','email']);
+
+            Self::send_task_delete_mail($user_name_create,$task,$map);
 
             //decrement
             UserTaskAnalytic::where('user_id', $userID)
@@ -67,12 +98,14 @@ class TaskMapping extends Model
             self::where('id', $task_map_id)
                     ->update(['role' => $map_data['role']]);
             $edited_details .= "role ";
+            $edit_key_value['role'] = $map_data['role'];
         }
 
         if(isset($map_data['assigned_at'])){
             self::where('id', $task_map_id)
                     ->update(['assigned_at' => $map_data['assigned_at']]);
             $edited_details .= "assigned_at ";
+            $edit_key_value['assigned_at'] = $map_data['assigned_at'];
         }
         
         if(isset($map_data['status']) && $map_data['status']==false){
@@ -83,6 +116,11 @@ class TaskMapping extends Model
                     ]);
         }
         
+        $ID = Self::where('id',$task_map_id)->get(['user_id','task_id']);
+        $user = User::where('id',$ID['userID'])->pluck(['name','email']);
+        $task = Task::where('id',$ID['task_id'])->pluck('title','due_time');
+        Self::send_task_edit_mail($user,$task,$edit_key_value);
+
         $task_map = self::find($task_map_id);
         return $task_map;
     }
@@ -130,13 +168,23 @@ class TaskMapping extends Model
 
     public static function delete_task_map($task_map_id)
     {
-        $userID = self::where('id',$task_map_id)
-                    ->pluck('user_id');
-        UserTaskAnalytic::where('user_id', $userID)
+        $ID = self::where('id',$task_map_id)
+                    ->pluck(['user_id','task_id','role']);
+        UserTaskAnalytic::where('user_id', $ID['user_id'])
                         ->decrement('yet_to_do_task');
+        
+        //mail
+        //name, map_id, task_title, role
+        $user = User::where('id',$ID['user_id'])->pluck(['name','email']);
+        $task = Task::where('id',$ID['task_id'])->pluck(['title','due_time']);
+        $map  = Self::where('id',$task_map_id) ->pluck(['id','role']);
+        // $map_data,$user_name,$task
+        Self::send_task_delete_mail($user,$task,$map);
+
+
         self::where('id', $task_map_id)
             ->delete();
-
+        
         return "Task Map is deleted";
 
     }

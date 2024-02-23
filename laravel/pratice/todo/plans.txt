@@ -7,10 +7,26 @@ email : mail verification and reset password links
 
 mail should contains :
 
-task_title
-role
-assigned_at
-due_time
+Create:
+
+name 		: User
+email 		: User
+title		: Task
+task_id		: Map
+role		: Map
+asssigned_at 	: Map
+due_time	: Task
+
+Delete:
+
+name 		: User
+email 		: User
+title		: Task
+task_id		: Map
+role		: Map
+
+
+
 
 user_id
 yet_to_do_task
