@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Task;
 use App\TaskMapping;
 use App\UserTaskAnalytic;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 
@@ -42,7 +44,14 @@ class DueAssignTask extends Command
     public function handle()
     {
         //we need to have the duplicated of the userID
-        $usersID = TaskMapping::where('status','0')->pluck('user_id');
+
+        $currentTime = Carbon::now();
+        $tasks = Task::where('due_time','<',$currentTime)->get('id');
+
+        $usersID = TaskMapping::where('status','0')
+                                ->whereIn('task_id',$tasks)
+                                ->pluck('user_id');
+
         foreach($usersID as $userID){
             UserTaskAnalytic::where('user_id',$userID)
                                 ->increment('due_task');

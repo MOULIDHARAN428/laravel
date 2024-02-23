@@ -39,6 +39,7 @@ class Task extends Model
 
         $task->title = $task_data['title'];
         $task->description = $task_data['description'];
+        $task->due_time = $task_data['due_time'];
         
         if(isset($task_data['urgency'])){
             $task->urgency = $task_data['urgency'];
@@ -47,11 +48,6 @@ class Task extends Model
         if(isset($task_data['parent_id'])){
             $task->parent_id = $task_data['parent_id'];
         }
-
-        if(isset($task_data['due_time'])){
-            $task->due_time = $task_data['due_time'];
-        }
-        
         $task->save();
         return $task;
     }
@@ -123,8 +119,13 @@ class Task extends Model
                     ->toArray();
 
         array_push($subTaskID, $task_id);
-        dd($subTaskID);
         foreach($subTaskID as $taskID){
+
+            //recursive function
+            if($taskID != $task_id){
+                self::delete_task($subTaskID);
+            }
+            
             self::where('id', $taskID)
                   ->delete();
 

@@ -29,9 +29,14 @@ Route::get('/plain',function(){
 //     return "Logged In";
 // })->middleware('auth:api');
 
-Route::get('/admin',function(){
-    return "admin...";
-})->middleware('admin');
+// Route::get('/admin',function(){
+//     return "admin...";
+// })->middleware('admin');
+
+Route::get('/assign','');
+Route::get('/delete','');
+Route::get('/edit','');
+
 
 Route::middleware('auth:api')->get('/users', function (Request $request) {
     return $request->user();

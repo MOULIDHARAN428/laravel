@@ -1,11 +1,16 @@
-Cron Job
-Schedule creation : for due_task, weekly, monthly and quaterly
-Command creation
+testing : edit status
+
 Email templete : task map creation, edit, delete
 Queue : Email
 
-eamil : mail verification and reset password links
+email : mail verification and reset password links
 
+mail should contains :
+
+task_title
+role
+assigned_at
+due_time
 
 user_id
 yet_to_do_task

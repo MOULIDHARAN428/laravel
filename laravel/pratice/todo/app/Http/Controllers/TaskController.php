@@ -68,6 +68,12 @@ class TaskController extends Controller
                 "message" => "Description is Required!"
             ], 200);
         }
+        if(!isset($request['due_time'])){
+            return response()->json([
+                "ok" => false,
+                "message" => "Due time is Required!"
+            ], 200);
+        }
         if(isset($request['parent_id']) && !Task::where('id', $request['parent_id'])->exists()){
             return response()->json([
                 "ok" => false,
@@ -109,7 +115,6 @@ class TaskController extends Controller
                 "message" => "Assign Time is Required!"
             ], 200);
         }
-        
         $task = Task::where('id',($request['task_id']))->first();
         if(!isset($task)){
             $message = 'No task with '.$request['task_id'].' is not found!';
@@ -160,7 +165,7 @@ class TaskController extends Controller
         }
 
         $status = TaskMapping::where('id',$task_map_id)->pluck('status');
-        if($status){
+        if(!isset($status)){
             return response()->json([
                 "ok" => false,
                 "message" => "User task is finished!",
@@ -276,7 +281,7 @@ class TaskController extends Controller
         //delete should be done only if the status is false
         $status = TaskMapping::where('id',$task_map_id)
                     ->pluck('status');
-        if($status){
+        if(!isset($status)){
             return response()->json([
                 "ok" => false,
                 "message" => "Task is completed can't delete now!",
