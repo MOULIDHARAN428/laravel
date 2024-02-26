@@ -1,38 +1,12 @@
-change due time send mail
+change due time send mail, delete task send mail
 
 testing : edit status
-
-Email templete : task map creation, edit, delete : done
-testing : create, edit, delete
 
 // done
 
 Queue : Email 
 
 email : mail verification and reset password links
-
-mail should contains :
-
-Create:
-
-name 		: User
-email 		: User
-title		: Task
-task_id		: Map
-role		: Map
-asssigned_at 	: Map
-due_time	: Task
-
-Delete:
-
-name 		: User
-email 		: User
-title		: Task
-task_id		: Map
-role		: Map
-
-
-
 
 user_id
 yet_to_do_task

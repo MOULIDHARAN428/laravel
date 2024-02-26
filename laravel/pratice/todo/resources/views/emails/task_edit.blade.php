@@ -7,8 +7,11 @@
 <p><strong>Task Id:</strong> {{ $map['id'] }}</p> 
 <p><strong>Role:</strong> {{ $map['role'] }}</p> 
 <p><strong>Assigned At:</strong> {{ $map['assigned_at'] }}</p> 
-<p><strong>Due Time:</strong> {{ $task['due_time'] }}</p>
-
+@if(isset($task['due_time']))
+    <p><strong>Due Time:</strong> {{ $task['due_time'] }}</p>
+@else
+<p><strong>Due Time:</strong> Not assigned</p>
+@endif
 
 {{-- name, email, title, due_time, $map['id'],role, assigned_at --}}
 {{-- @if(isset($value))

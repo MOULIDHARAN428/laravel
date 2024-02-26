@@ -210,7 +210,8 @@ class TaskController extends Controller
     }
 
     public function edit_map_status(Request $request,$task_map_id){
-        if(!TaskMapping::find($task_map_id)){
+        $task_map_details = TaskMapping::find($task_map_id);
+        if(!isset($task_map_details)){
             return response()->json([
                 "ok" => false,
                 "message" => "No such task map ID is found!"
@@ -218,11 +219,7 @@ class TaskController extends Controller
         }
         $user = Auth::user();
         $userID = $user->id;
-        
-        $check_task_exits = TaskMapping::where('user_id', $userID)
-                ->where('task_id',$task_map_id)->first();
-        
-        if(!isset($check_task_exits)){
+        if($task_map_details['user_id'] != $userID){
             return response()->json([
                 "ok" => false,
                 "message" => "No task matches"
