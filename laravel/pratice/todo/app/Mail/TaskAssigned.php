@@ -18,7 +18,6 @@ class TaskAssigned extends Mailable
      */
     public function __construct($user,$task,$map)
     {
-        // dd($user['name']." ".$user['email']." ".$task['title']."-".$task['due_time']." ".$map['role']);
         $this->task = $task;
         $this->user = $user;
         $this->map  = $map;
@@ -33,7 +32,7 @@ class TaskAssigned extends Mailable
     {
         
 
-        return $this->view('emails.task_edit')
+        return $this->view('emails.task_assigned')
                     ->with(['task'=>$this->task,
                             'user'=>$this->user,
                             'map'=>$this->map])

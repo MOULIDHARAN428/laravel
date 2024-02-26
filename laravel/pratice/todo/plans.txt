@@ -2,8 +2,12 @@ change due time send mail
 
 testing : edit status
 
-Email templete : task map creation, edit, delete
-Queue : Email
+Email templete : task map creation, edit, delete : done
+testing : create, edit, delete
+
+// done
+
+Queue : Email 
 
 email : mail verification and reset password links
 
