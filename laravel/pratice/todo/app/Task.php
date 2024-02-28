@@ -9,32 +9,33 @@ use App\TaskMapping;
 class Task extends Model
 {
     use SoftDeletes;
-    public function task_mappings(){
+    public function taskMappings(){
         return $this->hasMany(TaskMapping::class,'task_id','id');
     }
 
     // Relationship: One-to-Many (Child Tasks)
-    public function child_tasks()
+    public function childTasks()
     {
         return $this->hasMany(Task::class, 'id', 'parent_id');
     }
     
     // Relationship: Many-to-One (Parent Task)
-    public function parent_task()
+    public function parentTask()
     {
         return $this->belongsTo(Task::class, 'parent_id', 'id');
     }
 
-    public static function get_task(){
-        $task = self::all();
-        return $task;
+    public static function getTasks(){
+        $tasks = self::all();
+        return $tasks;
     }
-    public static function get_taskid($task_id){
+    
+    public static function getTaskID($task_id){
         $task = self::where('id', $task_id)->first();
         return $task;
     }
 
-    public static function create_task($task_data){
+    public static function createTask($task_data){
         $task = new Task();
 
         $task->title = $task_data['title'];
@@ -52,47 +53,20 @@ class Task extends Model
         return $task;
     }
 
-    public static function edit_task($task_data,$task_id){
+    public static function editTask($task_data,$task_id){
+        $editableFields = ['title', 'description', 'urgency', 'parent_id', 'due_time'];
         
-        $edited_details = "";
-        
-        //title,description,urgency
-        if(isset($task_data['title'])){
-            self::where('id', $task_id)
-                    ->update(['title' => $task_data['title']]);
-            $edited_details .= "title, ";
-        }
-
-        if(isset($task_data['description'])){
-            self::where('id', $task_id)
-                    ->update(['description' => $task_data['description']]);
-            $edited_details .= "description, ";
-        }
-        
-        if(isset($task_data['urgency'])){
-            self::where('id', $task_id)
-                    ->update(['urgency' => $task_data['urgency']]);
-            $edited_details .= "urgency, ";
-        }
-
-        if(isset($task_data['parent_id'])){
-            self::where('id', $task_id)
-                    ->update(['parent_id' => $task_data['parent_id']]);
-            $edited_details .= "parent_id, ";
-        }
-
-        if(isset($task_data['due_time'])){
-            self::where('id', $task_id)
-                    ->update(['due_time' => $task_data['due_time']]);
-            $edited_details .= "due_time, ";
-            //???????????
+        foreach ($editableFields as $field) {
+            if (isset($task_data[$field])) {
+                self::where('id', $task_id)->update([$field => $task_data[$field]]);
+            }
         }
         
         $task =  Task::find($task_id);
         return $task;
     }
 
-    public static function edit_status($status,$task_id){
+    public static function editStatus($status,$task_id){
 
         if($status=="1"){
             self::where('id', $task_id)
@@ -113,18 +87,19 @@ class Task extends Model
         return $task;
     }
     
-    public static function delete_task($task_id)
+    public static function deleteTask($task_id)
     {
-        $subTaskID = self::where('parent_id', $task_id)
+        $sub_task_ID = self::where('parent_id', $task_id)
                     ->pluck('id')
                     ->toArray();
 
-        array_push($subTaskID, $task_id);
-        foreach($subTaskID as $taskID){
+        array_push($sub_task_ID, $task_id);
+        
+        foreach($sub_task_ID as $taskID){
 
             //recursive function
             if($taskID != $task_id){
-                self::delete_task($subTaskID);
+                self::delete_task($sub_task_ID);
             }
             
             self::where('id', $taskID)
@@ -138,7 +113,6 @@ class Task extends Model
                          ->delete();
             
             foreach($usersID as $userID){
-                //??????????????
                 UserTaskAnalytic::where('user_id', $userID)
                         ->decrement('yet_to_do_task');
             }

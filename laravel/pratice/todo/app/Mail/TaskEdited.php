@@ -31,7 +31,7 @@ class TaskEdited extends Mailable
      */
     public function build()
     {
-        return $this->view('emails.task_edit')
+        return $this->view('emails.taskEdit')
                     ->with(['task'=>$this->task,
                             'user'=>$this->user,
                             'map'=>$this->map])

@@ -34,13 +34,8 @@ Route::get('/plain',function(){
 // })->middleware('admin');
 
 
-
-Route::middleware('auth:api')->get('/users', function (Request $request) {
-    return $request->user();
-});
-
 Route::post('/register', 'Auth\RegisterController@register'); //done
-Route::post('/login',  'Auth\LoginController@login')->name('login'); //done
+Route::get('/login',  'Auth\LoginController@login')->name('login'); //done
 Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); //done
 
 // forgot password and reset password
@@ -49,35 +44,35 @@ Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); /
 
 Route::prefix('task')->group(function () {
     // GET
-    Route::get('/','TaskController@get_task'); 
+    Route::get('/','TaskController@getTasks'); 
 
-    Route::get('/{task_id}','TaskController@get_specific_task'); 
+    Route::get('/{task_id}','TaskController@getSpecificTask'); 
 
-    Route::get('/mapping/{user_id}','TaskController@get_user_task'); // need to test
+    Route::get('/mapping/{user_id}','TaskController@getUserTask'); // need to test
 
     Route::middleware('auth:api')->group(function () {
         // POST
-        Route::post('/','TaskController@create_task'); 
+        Route::post('/','TaskController@createTask'); 
 
-        Route::post('/mapping/status/{task_map_id}','TaskController@edit_map_status'); 
+        Route::post('/mapping/status/{task_map_id}','TaskController@editMapStatus'); 
 
         
         Route::middleware('admin')->group(function () {
 
-            Route::post('/mapping','TaskController@assign_task'); 
+            Route::post('/mapping','TaskController@assignTask'); 
 
-            Route::post('/mapping/{task_map_id}','TaskController@edit_map_task'); 
+            Route::post('/mapping/{task_map_id}','TaskController@editMapTask'); 
 
-            Route::post('/status/{task_id}','TaskController@edit_status_admin');
+            Route::post('/status/{task_id}','TaskController@editStatusAdmin');
 
             // DELETE
-            Route::delete('/{task_id}','TaskController@delete_task'); 
+            Route::delete('/{task_id}','TaskController@deleteTask'); 
 
-            Route::delete('/mapping/{task_map_id}','TaskController@delete_map');
+            Route::delete('/mapping/{task_map_id}','TaskController@deleteMap');
         
         });
 
-        Route::post('/{task_id}','TaskController@edit_task'); 
+        Route::post('/{task_id}','TaskController@editTask'); 
 
     });
 

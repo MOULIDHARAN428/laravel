@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('content')
 <form>
     <div class="form-group">
         <label for="exampleInputEmail1">Email address</label>
@@ -12,3 +13,5 @@
     <button type="submit" class="btn btn-primary">Login</button>
     <button type="submit" class="btn btn-link">Forgot Password</button>
 </form>
+@endsection
+

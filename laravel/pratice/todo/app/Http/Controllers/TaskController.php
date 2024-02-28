@@ -1,300 +1,299 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Resources\TaskResponseResource;
 use App\Task;
 use App\TaskMapping;
 use App\User;
-
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
 
     //CRUD
-    public function get_task(){
-        $task_count = Task::count();
-        if($task_count==0){
-            return response()->json([
-                "ok" => true,
-                "message" => "No tasks found"
-            ], 200);
-        }
-        $tasks = Task::get_task();
-        return response()->json([
-            "ok" => true,
-            "tasks" => $tasks
-        ], 200);
-    }
-    public function get_specific_task($task_id){
-        $task_present_or_not = Task::find($task_id);
-        if(!$task_present_or_not){
-            return response()->json([
-                "ok" => false,
-                "message" => "Task ID is not available"
-            ], 404);
-        }
-        $task = Task::get_taskid($task_id);
-        return response()->json([
-            "ok" => true,
-            "task" => $task          
-        ], 200);
-    }
-    public function get_user_task($user_id){
-        $is_user_assigned_task = TaskMapping::where('user_id',$user_id)->first();
-        if(!isset($is_user_assigned_task)){
-            return response()->json([
-                "ok" => false,
-                "message" => "User hasn't assigned any task yet!"
-            ], 404);
-        }
-        $tasks = TaskMapping::get_user_task($user_id);
-        return response()->json([
-            "ok" => true,
-            "tasks" => $tasks            
-        ], 200);
-    }
+    public function getTasks(){
+        $validator = Validator::make([], [
+            'tasks_exist' => 'exists:tasks',
+        ]);
 
-    public function create_task(Request $request){
-        if(!isset($request['title'])){
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
             return response()->json([
-                "ok" => false,
-                "message" => "Title is Required!"
-            ], 200);
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
         }
-        if(!isset($request['description'])){
-            return response()->json([
-                "ok" => false,
-                "message" => "Description is Required!"
-            ], 200);
-        }
-        if(!isset($request['due_time'])){
-            return response()->json([
-                "ok" => false,
-                "message" => "Due time is Required!"
-            ], 200);
-        }
-        if(isset($request['parent_id']) && !Task::where('id', $request['parent_id'])->exists()){
-            return response()->json([
-                "ok" => false,
-                "message" => "No such parent task with ID ".$request['parent_id']." found!"
-            ], 200);
 
-        }
-        $task = Task::create_task($request);
+        $tasks = Task::getTasks();
+        $task_data = new TaskResponseResource($tasks);
         return response()->json([
-            "ok" => true,
-            "task" => $task,
-            "message" => "Task is created"
+            'ok' => true,
+            'task' => $task_data
+        ], 200);
+
+    }
+    public function getSpecificTask($task_id){
+        $validator = Validator::make(['task_id' => $task_id], [
+            'task_id' => 'exists:tasks,id',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+
+        $task = Task::getTaskID($task_id);
+        $task_data = new TaskResponseResource($task);
+        return response()->json([
+            'ok' => true,
+            'task' => $task_data
+        ], 200);
+    }
+    public function getUserTask($user_id){
+        $validator = Validator::make(['task_id' => $user_id], [
+            'user_id' => 'exists:task_mappings,user_id',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+
+        $tasks = TaskMapping::getUserTask($user_id);
+        $task_data = new TaskResponseResource($tasks);
+        return response()->json([
+            'ok' => true,
+            'task' => $task_data
         ], 200);
     }
 
-    public function assign_task(Request $request){
-        if(!isset($request['task_id'])){
+    public function createTask(Request $request){
+
+        $validator = Validator::make($request->all(),[
+            'title' => 'required',
+            'description' => 'required',
+            'due_time'=> 'required',
+            'parent_id'=> 'exists:tasks,id'
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
             return response()->json([
-                "ok" => false,
-                "message" => "Task ID is Required!"
-            ], 200);
-        }
-        if(!isset($request['user_id'])){
-            return response()->json([
-                "ok" => false,
-                "message" => "User ID is Required!"
-            ], 200);
-        }
-        if(!isset($request['role'])){
-            return response()->json([
-                "ok" => false,
-                "message" => "Role is Required!"
-            ], 200);
-        }
-        if(!isset($request['assigned_at'])){
-            return response()->json([
-                "ok" => false,
-                "message" => "Assign Time is Required!"
-            ], 200);
-        }
-        $task = Task::where('id',($request['task_id']))->first();
-        if(!isset($task)){
-            $message = 'No task with '.$request['task_id'].' is not found!';
-            return response()->json([
-                "ok" => false,
-                "message" => $message
-            ], 200);
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
         }
 
-        $user = User::where('id',($request['user_id']))->first();
-        if(!isset($user)){
-            $message= 'No user with '.$request['user_id'].' is not found!';
-            return response()->json([
-                "ok" => false,
-                "message" => $message
-            ], 200);
-        }
-
-       $task_map = TaskMapping::create_task_map($request);
-       return response()->json([
-            "ok" => true,
-            "task_map" => $task_map, 
-            "message" => "Task is assigned!"
-        ], 200); 
-    }
-
-    public function edit_task(Request $request,$task_id){
-        if(!Task::find($task_id)){
-            return response()->json([
-                "ok" => true,
-                "message" => "No Task with ID ".$task_id." not found",
-            ], 400);
-        }
-        $task = Task::edit_task($request,$task_id);
+        $task = Task::createTask($request);
+        $task_data = new TaskResponseResource($task);
         return response()->json([
-            "ok" => true,
-            "task" => $task,
-            "message" => "Task is edited!"
+            'ok' => true,
+            'task' => $task_data
         ], 200);
     }
 
-    public function edit_map_task(Request $request,$task_map_id){
-        if(!TaskMapping::find($task_map_id)){
+    public function assignTask(Request $request){
+        $validator = Validator::make($request->all(),[
+            'task_id' => 'required|exists:tasks,id',
+            'user_id' => 'required|exists:users,id',
+            'role'=> 'required',
+            'assigned_at'=> 'required',
+            'parent_id'=> 'exists:tasks,id'
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
             return response()->json([
-                "ok" => false,
-                "message" => "No such task map ID is found!",
-            ], 400);
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
         }
 
-        $status = TaskMapping::where('id',$task_map_id)->pluck('status');
-        if(!isset($status)){
-            return response()->json([
-                "ok" => false,
-                "message" => "User task is finished!",
-            ], 400);
-        }
-
-        if(isset($request['task_id'])){
-            //checking whether the task id is present in database
-            $task = Task::where('id',($request['task_id']))->first();
-            if(!isset($task)){
-                return response()->json([
-                    "ok" => false,
-                    "message" => "No such task ID is found",
-                ], 400);
-            }
-        }
-
-        if(isset($request['user_id'])){
-            //check whether the user_id available
-            $user = User::where('id',($request['user_id']))->first();
-            if(!isset($user)){
-                return response()->json([
-                    "ok" => false,
-                    "message" => "No such user is found",
-                ], 400);
-            }
-        }
-        if(isset($request['user_id']) && (isset($request['task_id']) || isset($request['role']) || 
-        isset($request['assigned_at']) || isset($request['status']))){
-            return response()->json([
-                "ok" => false,
-                "message" => "user id and other map details should be edited separately",
-            ], 400);
-        }
-
-        $task_map = TaskMapping::edit_map_task($request,$task_map_id);
+        $task_map = TaskMapping::createTaskMap($request);
+        $task_map_data = new TaskResponseResource($task_map);
         return response()->json([
-            "ok" => true,
-            "task_map" => $task_map,
-            "message" => "Task map is edited",
-        ], 200);
-        // return "status";
-    }
-
-    public function edit_map_status(Request $request,$task_map_id){
-        $task_map_details = TaskMapping::find($task_map_id);
-        if(!isset($task_map_details)){
-            return response()->json([
-                "ok" => false,
-                "message" => "No such task map ID is found!"
-            ], 400);
-        }
-        $user = Auth::user();
-        $userID = $user->id;
-        if($task_map_details['user_id'] != $userID){
-            return response()->json([
-                "ok" => false,
-                "message" => "No task matches"
-            ], 400);
-        }
-
-        $task_map = TaskMapping::edit_map_status($request['status'],$task_map_id);
-        return response()->json([
-            "ok" => true,
-            "task_map" => $task_map,
-            "message" => "Task is edited!"
-        ], 200);
-        // return "status";
-    }
-
-    public function edit_status_admin(Request $request,$task_id){
-        if(!isset($request['status'])){
-            return response()->json([
-                "ok" => true,
-                "message" => "Status is Required!",
-            ], 400);
-        }
-
-        if(!Task::find($task_id)){
-            return response()->json([
-                "ok" => true,
-                "message" => "No such task ID is found!",
-            ], 400);
-        }
-
-        $task = Task::edit_status($request['status'],$task_id);
-        return response()->json([
-            "ok" => true,
-            "task" => $task,
-            "message" => "Task status is updated"            
+            'ok' => true,
+            'task' => $task_map_data
         ], 200);
     }
 
-    public function delete_task($task_id){
-        if(!Task::find($task_id)){
+    public function editTask(Request $request,$task_id){
+        $validator = Validator::make(['task_id' => $task_id], [
+            'task_id' => 'required|exists:tasks,id',
+        ]);
+        
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
             return response()->json([
-                "ok" => false,
-                "message" => "No such task ID is found!",
-            ], 400);
-        }
-
-        $message = Task::delete_task($task_id);
-        return response()->json([
-            "ok" => true,
-            "message" => $message
-        ], 200);
-    }
-
-    public function delete_map($task_map_id){
-        if(!TaskMapping::find($task_map_id)){
-            return response()->json([
-                "ok" => false,
-                "message" => "No such task map ID is found!",
-            ], 400);
-        }
-
-        //delete should be done only if the status is false
-        $status = TaskMapping::where('id',$task_map_id)
-                    ->pluck('status');
-        if(!isset($status)){
-            return response()->json([
-                "ok" => false,
-                "message" => "Task is completed can't delete now!",
-            ], 400);
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
         }
         
-        $message = TaskMapping::delete_task_map($task_map_id);
+        $task_map = Task::editTask($request,$task_id);
+        $task_map_data = new TaskResponseResource($task_map);
+        return response()->json([
+            'ok' => true,
+            'task' => $task_map_data
+        ], 200);
+    }
+
+    public function editMapTask(Request $request,$task_map_id){
+        $request['task_map_id'] = $task_map_id;
+        $validator = Validator::make($request->all(),[
+            'task_id' => 'exists:tasks,id',
+            'user_id' => 'exists:users,id',
+            'role'=> 'required',
+            'assigned_at'=> 'required',
+            'parent_id'=> 'exists:tasks,id',
+            'task_map_id' => ['required|exists:task_mappings,id',
+                                Rule::exists('task_mappings', 'id')->where(function ($query) {
+                                    $query->where('status', '!=', 1);
+                                })],
+
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+
+        //users need to be edited alone for analytical purposes
+        // if(isset($request['user_id']) && (isset($request['task_id']) || isset($request['role']) || 
+        // isset($request['assigned_at']) || isset($request['status']))){
+        //     return response()->json([
+        //         "ok" => false,
+        //         "message" => "user id and other map details should be edited separately",
+        //     ], 400);
+        // }
+
+        $task_map = TaskMapping::editMapTask($request,$task_map_id);
+        $task_map_data = new TaskResponseResource($task_map);
+        return response()->json([
+            'ok' => true,
+            'task' => $task_map_data
+        ], 200);
+    }
+
+    public function editMapStatus(Request $request,$task_map_id){
+        $request['task_map_id'] = $task_map_id;
+        $user = Auth::user();
+        $userID = $user->id;
+        $validator = Validator::make($request->all(),[
+            'user_id' => 'exists:users,id',
+            'task_map_id' => ['required|exists:task_mappings,id',
+                            Rule::exists('task_mappings', 'id')->where(function ($query) use ($userID) {
+                                $query->where('user_id', '==', $userID);
+                            }),]
+
+        ]);
+        
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+        
+        $task_map = TaskMapping::editMapStatus($request['status'],$task_map_id);
         return response()->json([
             "ok" => true,
-            "message" => $message
+            "task_map" => $task_map,
+            "message" => "Task is edited!"
+        ], 200);
+    }
+
+    public function editStatusAdmin(Request $request,$task_id){
+        $request['task_id'] = $task_id;
+        $validator = Validator::make($request->all(),[
+            'status' => 'required',
+            'task_id' => 'required|exists:tasks,id'
+
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+
+        $task = Task::editStatus($request['status'],$task_id);
+        $task_data = new TaskResponseResource($task);
+        return response()->json([
+            'ok' => true,
+            'task' => $task_data
+        ], 200);
+    }
+
+    public function deleteTask($task_id){
+        $validator = Validator::make(['task_id' => $task_id], [
+            'task_id' => 'exists:tasks,id',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+
+        $message = Task::deleteTask($task_id);
+        $resp_message = new TaskResponseResource($message);
+        return response()->json([
+            'ok' => true,
+            'message' => $resp_message
+        ], 200);
+    }
+
+    public function deleteMap($task_map_id){
+
+        $validator = Validator::make(['task_map_id' => $task_map_id], [
+            'task_map_id' => [
+                'required',
+                Rule::exists('task_mappings', 'id')->where(function ($query) {
+                    $query->where('status', '!=', 1);
+                }),
+            ],
+        ]);
+        
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
+        }
+        
+        $message = TaskMapping::deleteTaskMap($task_map_id);
+        $resp_message = new TaskResponseResource($message);
+        return response()->json([
+            'ok' => true,
+            'message' => $resp_message
         ], 200);
     }
 

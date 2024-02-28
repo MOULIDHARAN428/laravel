@@ -32,7 +32,7 @@ class TaskAssigned extends Mailable
     {
         
 
-        return $this->view('emails.task_assigned')
+        return $this->view('emails.taskAssigned')
                     ->with(['task'=>$this->task,
                             'user'=>$this->user,
                             'map'=>$this->map])

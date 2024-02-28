@@ -31,7 +31,7 @@ class TaskDeleted extends Mailable
      */
     public function build()
     {
-        return $this->view('emails.task_delete')
+        return $this->view('emails.taskDelete')
                     ->with(['task'=>$this->task,
                             'user'=>$this->user,
                             'map'=>$this->map])
