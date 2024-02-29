@@ -32,47 +32,39 @@ class TaskMapping extends Model
     }
 
     public static function createTaskMap($map_data){
+        //user_id, task_id, id
         $task_map = new TaskMapping();
         $task_map->task_id = $map_data['task_id'];
         $task_map->user_id = $map_data['user_id'];
         $task_map->role = $map_data['role'];
         $task_map->assigned_at = $map_data['assigned_at'];
+
+        if(isset($map_data['parent_id'])){
+            $task_map->parent_id = $map_data['parent_id'];
+        }
+
         $task_map->save();
 
         // incrementing the yet_to_do task
         UserTaskAnalytic::where('user_id', $map_data['user_id'])
                         ->increment('yet_to_do_task');
 
-        // mail
-        $map_data['id'] = $task_map->id;
-        $user_data = User::where('id',$map_data['user_id'])->get(['name','email'])->first();
-        $task_data = Task::where('id',$map_data['task_id'])->get(['title','due_time'])->first();
-        SendTaskAssignEmail::dispatch($user_data->toArray(),$task_data->toArray(),$map_data->toArray())->onQueue('emails');
-        
-        return $task_map;
+        $taskWithAssignes = Task::where('id', $map_data['task_id'])
+                            ->with('taskMappings')
+                            ->first();
+                
+        return $taskWithAssignes;
     }
 
     public static function editMapTask($map_data,$task_map_id){
         
         if(isset($map_data['user_id'])){
-            $map_detail_cur = self::where('id', $task_map_id)->first(['user_id','task_id']);
-
-            $task_deatils = Task::where('id',$map_detail_cur->task_id)->first(['title','due_time']);
-            $map_deatils  = Self::where('id',$task_map_id)->first(['id','role','assigned_at']);
-            
-            //deletion of task mail
-            $user_name_delete = User::where('id',$map_detail_cur->user_id)->first(['name','email']);
-            SendTaskDeleteEmail::dispatch($user_name_delete->toArray(),$task_deatils->toArray(),$map_deatils->toArray())->onQueue('emails');
-
-            //creation of task mail
-            $user_name_create = User::where('id',$map_data['user_id'])->first(['name','email']);
-            SendTaskAssignEmail::dispatch($user_name_create->toArray(),$task_deatils->toArray(),$map_deatils->toArray())->onQueue('emails');
-
+            $old_user = self::where('id', $task_map_id)->pluck('user_id');
             self::where('id', $task_map_id)
                     ->update(['user_id' => $map_data['user_id']]);
             
             //decrement
-            UserTaskAnalytic::where('user_id', $map_detail_cur->user_id)
+            UserTaskAnalytic::where('user_id', $old_user)
                         ->decrement('yet_to_do_task');
 
             //increment
@@ -80,15 +72,9 @@ class TaskMapping extends Model
                         ->increment('yet_to_do_task');
 
             $task_map = self::find($task_map_id);
+            $task_map['old_user'] = $old_user;
+            
             return $task_map;
-        }
-        
-        if(isset($map_data['status']) && $map_data['status']==false){
-            self::where('id', $task_map_id)
-                    ->update([
-                        'status' => $map_data['status'],
-                        'time_completed' => date("Y-m-d H:i:s")
-                    ]);
         }
 
         $editableFields = ['task_id', 'role', 'assigned_at'];
@@ -98,23 +84,17 @@ class TaskMapping extends Model
             }
         }
         
-        $ID = Self::where('id',$task_map_id)->first(['user_id','task_id']);
-        $user_details = User::where('id',$ID['user_id'])->get(['name','email'])->first();
-        $task_details = Task::where('id',$ID['task_id'])->get(['title','due_time'])->first();
         $task_map = self::find($task_map_id);
-
-        SendTaskEditEmail::dispatch($user_details->toArray(), $task_details->toArray(), $task_map->toArray())->onQueue('emails');
-
         return $task_map;
     }
 
     public static function editMapStatus($status,$task_map_id){
         $user = Auth::user();
         $userID = $user->id;
-        $status_cur = self::find($task_map_id);
-        // update
+        $task_map = self::find($task_map_id);
         
-        if($status=='1' && $status_cur['status']=='0'){
+        // update
+        if($status=='1' && $task_map['status']=='0'){
 
             // UserTaskAnalytic::where('user_id', $userID)->update([
             //     'yet_to_do_task' => DB::raw('yet_to_do_task - 1'),
@@ -143,7 +123,7 @@ class TaskMapping extends Model
             
         }
         
-        else if($status=='0' && $status_cur['status']=='1'){
+        else if($status=='0' && $task_map['status']=='1'){
 
             // UserTaskAnalytic::where('user_id', $userID)->update([
             //     'yet_to_do_task' => DB::raw('yet_to_do_task + 1'),
@@ -168,29 +148,27 @@ class TaskMapping extends Model
                 ]);
         }
 
-        $task_map = self::find($task_map_id);
-        return $task_map;
+        $taskWithAssignes = Task::where('id',$task_map['task_id'])
+                            ->with('taskMappings')
+                            ->first();
+                
+        return $taskWithAssignes;
     }
 
     public static function deleteTaskMap($task_map_id)
     {
-        $ID = self::where('id',$task_map_id)
-                    ->get(['user_id','task_id','role'])->first();
-        UserTaskAnalytic::where('user_id', $ID['user_id'])
+        $user_id = self::where('id', $task_map_id)->pluck('user_id');
+
+        $id_for_mail_content = self::where('id',$task_map_id)
+                    ->get(['user_id','task_id','id'])->first();
+        
+        UserTaskAnalytic::where('user_id', $user_id)
                         ->decrement('yet_to_do_task');
-        
-        //mail
-        
-        $user_details = User::where('id',$ID['user_id'])->get(['name','email'])->first();
-        $task_details = Task::where('id',$ID['task_id'])->get(['title','due_time'])->first();
-        $map_details  = Self::where('id',$task_map_id) ->get(['id','role'])->first();
-
-        SendTaskDeleteEmail::dispatch($user_details->toArray(),$task_details->toArray(),$map_details->toArray())->onQueue('emails');
-
+                        
         self::where('id', $task_map_id)
             ->delete();
         
-        return "Task Map is deleted";
+        return $id_for_mail_content;
 
     }
 }

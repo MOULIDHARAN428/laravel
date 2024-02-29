@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Mail\TaskDeleted;
+use App\Mail\TaskAssignNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -11,20 +11,18 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
-class SendTaskDeleteEmail implements ShouldQueue
+class SendTaskAssignNotificationEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $task, $user, $map;
+    protected $user;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($user,$task,$map)
+    public function __construct($user)
     {
-        $this->task = $task;
         $this->user = $user;
-        $this->map  = $map;
     }
 
     /**
@@ -36,7 +34,7 @@ class SendTaskDeleteEmail implements ShouldQueue
     {
         $user = Auth::user();
         Mail::to($this->user['email'])
-            ->bcc($user->email)
-            ->send(new TaskDeleted($this->user,$this->task,$this->map));
+        ->bcc($user->email)
+        ->send(new TaskAssignNotification($this->user));
     }
 }

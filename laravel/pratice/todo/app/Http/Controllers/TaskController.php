@@ -1,7 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Http\Resources\TaskMappingResponseResource;
 use App\Http\Resources\TaskResponseResource;
+use App\Http\Resources\TaskResponseResourceTemp;
+use App\Http\Resources\TaskResponseWithAssignesResource;
 use App\Task;
 use App\TaskMapping;
 use App\User;
@@ -9,30 +13,17 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Traits\sendMailTrait;
 
 class TaskController extends Controller
 {
-
+    use sendMailTrait;
     //CRUD
     public function getTasks(){
-        $validator = Validator::make([], [
-            'tasks_exist' => 'exists:tasks',
-        ]);
-
-        if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
-        }
-
         $tasks = Task::getTasks();
-        $task_data = new TaskResponseResource($tasks);
         return response()->json([
             'ok' => true,
-            'task' => $task_data
+            'task' => count($tasks) > 0 ? TaskResponseWithAssignesResource::collection($tasks) : "No task"
         ], 200);
 
     }
@@ -40,42 +31,30 @@ class TaskController extends Controller
         $validator = Validator::make(['task_id' => $task_id], [
             'task_id' => 'exists:tasks,id',
         ]);
-
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
         }
 
         $task = Task::getTaskID($task_id);
-        $task_data = new TaskResponseResource($task);
         return response()->json([
             'ok' => true,
-            'task' => $task_data
+            'task' => TaskResponseWithAssignesResource::make($task)
         ], 200);
     }
-    public function getUserTask($user_id){
-        $validator = Validator::make(['task_id' => $user_id], [
-            'user_id' => 'exists:task_mappings,user_id',
+    
+    public function getUserTasks($user_id){
+        $validator = Validator::make(['user_id' => $user_id], [
+            'user_id' => 'exists:users,id|exists:task_mappings,user_id'
         ]);
 
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
         }
 
         $tasks = TaskMapping::getUserTask($user_id);
-        $task_data = new TaskResponseResource($tasks);
         return response()->json([
             'ok' => true,
-            'task' => $task_data
+            'task' => TaskMappingResponseResource::collection($tasks)
         ], 200);
     }
 
@@ -85,22 +64,17 @@ class TaskController extends Controller
             'title' => 'required',
             'description' => 'required',
             'due_time'=> 'required',
-            'parent_id'=> 'exists:tasks,id'
+            'parent_id'=> 'sometimes|exists:tasks,id'
         ]);
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
         }
 
         $task = Task::createTask($request);
-        $task_data = new TaskResponseResource($task);
+
         return response()->json([
             'ok' => true,
-            'task' => $task_data
+            'task' => TaskResponseWithAssignesResource::make($task)
         ], 200);
     }
 
@@ -110,22 +84,30 @@ class TaskController extends Controller
             'user_id' => 'required|exists:users,id',
             'role'=> 'required',
             'assigned_at'=> 'required',
-            'parent_id'=> 'exists:tasks,id'
+            'parent_id'=> 'sometimes|exists:tasks,id'
         ]);
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
         }
 
         $task_map = TaskMapping::createTaskMap($request);
-        $task_map_data = new TaskResponseResource($task_map);
+        
+        //Mail
+        //for assigned user
+        $last_assignes = $task_map['taskMappings']->last();
+        $this->sendAssignMail($last_assignes);
+        
+        //notification for remaining user that are assigned in the task
+        $assignes = $task_map['taskMappings'];
+        foreach($assignes as $assigne){
+            if($assigne['user_id']!=$last_assignes['user_id']){
+                $this->sendAssignNotificationMail($assigne['user_id']);
+            }
+        }
+
         return response()->json([
             'ok' => true,
-            'task' => $task_map_data
+            'task' => TaskResponseWithAssignesResource::make($task_map)
         ], 200);
     }
 
@@ -135,19 +117,13 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all());  
         }
         
         $task_map = Task::editTask($request,$task_id);
-        $task_map_data = new TaskResponseResource($task_map);
         return response()->json([
             'ok' => true,
-            'task' => $task_map_data
+            'task' => TaskResponseWithAssignesResource::make($task_map)
         ], 200);
     }
 
@@ -158,7 +134,7 @@ class TaskController extends Controller
             'user_id' => 'exists:users,id',
             'role'=> 'required',
             'assigned_at'=> 'required',
-            'parent_id'=> 'exists:tasks,id',
+            'parent_id'=> 'sometimes|exists:tasks,id',
             'task_map_id' => ['required|exists:task_mappings,id',
                                 Rule::exists('task_mappings', 'id')->where(function ($query) {
                                     $query->where('status', '!=', 1);
@@ -167,28 +143,26 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all());  
         }
 
-        //users need to be edited alone for analytical purposes
-        // if(isset($request['user_id']) && (isset($request['task_id']) || isset($request['role']) || 
-        // isset($request['assigned_at']) || isset($request['status']))){
-        //     return response()->json([
-        //         "ok" => false,
-        //         "message" => "user id and other map details should be edited separately",
-        //     ], 400);
-        // }
-
         $task_map = TaskMapping::editMapTask($request,$task_map_id);
-        $task_map_data = new TaskResponseResource($task_map);
+        
+        if(!isset($task_map['old_user'])){
+            $this->sendEditMail($task_map);
+        }
+        else{
+            //assign mail
+            $this->sendAssignMail($task_map);
+            
+            //delete mail
+            $task_map['user_id'] = $task_map['old_user'];
+            $this->sendDeleteMail($task_map);
+        }
+        
         return response()->json([
             'ok' => true,
-            'task' => $task_map_data
+            'task' => TaskMappingResponseResource::collection($task_map)
         ], 200);
     }
 
@@ -196,9 +170,11 @@ class TaskController extends Controller
         $request['task_map_id'] = $task_map_id;
         $user = Auth::user();
         $userID = $user->id;
+
         $validator = Validator::make($request->all(),[
+            'status' => 'required',
             'user_id' => 'exists:users,id',
-            'task_map_id' => ['required|exists:task_mappings,id',
+            'task_map_id' => ['required',
                             Rule::exists('task_mappings', 'id')->where(function ($query) use ($userID) {
                                 $query->where('user_id', '==', $userID);
                             }),]
@@ -206,18 +182,14 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all());  
         }
         
-        $task_map = TaskMapping::editMapStatus($request['status'],$task_map_id);
+        $taskWithAssignes = TaskMapping::editMapStatus($request['status'],$task_map_id);
+
         return response()->json([
             "ok" => true,
-            "task_map" => $task_map,
+            "task_map" => TaskResponseWithAssignesResource::collection($taskWithAssignes),
             "message" => "Task is edited!"
         ], 200);
     }
@@ -231,41 +203,35 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all());  
         }
 
-        $task = Task::editStatus($request['status'],$task_id);
-        $task_data = new TaskResponseResource($task);
+        $taskWithAssignes = Task::editStatus($request['status'],$task_id);
         return response()->json([
             'ok' => true,
-            'task' => $task_data
+            'task' => TaskResponseWithAssignesResource::collection($taskWithAssignes)
         ], 200);
     }
 
     public function deleteTask($task_id){
         $validator = Validator::make(['task_id' => $task_id], [
-            'task_id' => 'exists:tasks,id',
+            'task_id' => [
+                'required',
+                Rule::exists('task', 'id')->where(function ($query) {
+                    $query->where('status', '!=', 1);
+                }),
+            ],
         ]);
 
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all());  
         }
 
-        $message = Task::deleteTask($task_id);
-        $resp_message = new TaskResponseResource($message);
+        Task::deleteTask($task_id);
+
         return response()->json([
             'ok' => true,
-            'message' => $resp_message
+            'message' => "Tasks with its sub task has been deleted"
         ], 200);
     }
 
@@ -281,21 +247,23 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error_message = implode(' ', $errors);
-            return response()->json([
-                'ok' => false,
-                'error' => $error_message
-            ],404);  
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
         }
         
-        $message = TaskMapping::deleteTaskMap($task_map_id);
-        $resp_message = new TaskResponseResource($message);
+        $id_for_mail_content = TaskMapping::deleteTaskMap($task_map_id);
+        $this->sendDeleteMail($id_for_mail_content);
+        
         return response()->json([
             'ok' => true,
-            'message' => $resp_message
+            'message' => "The task has been deleted!"
         ], 200);
     }
 
-    
+    public function appendAndSendErrorMessage($errors){
+        $error_message = implode(' ', $errors);
+        return response()->json([
+            'ok' => false,
+            'error' => $error_message
+        ],404);  
+    }   
 }

@@ -39,22 +39,23 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    public function task_mappings(){
+    public function taskMappings(){
         return $this->hasMany(TaskMapping::class,'user_id','id');
     }
-    public function user_task_analytics(){
+    public function userTaskAnalytics(){
         return $this->hasOne(UserTaskAnalytic::class,'user_id','id');
     }
-    public function delete_user_account(Request $request){
+
+    public function userTasks(){
+        return $this->hasManyThrough(Task::class,TaskMapping::class,'user_id','id','id','task_id');
+    }
+   
+    public function deleteUserAccount(Request $request){
         $user = Auth::user();
-        if(!isset($user)){
-            $response = ["message" =>'User hasn\'t logged in'];
-            return response($response, 401);
-        }
         $user_id = $user->id;
         self::where('id',$user_id)
                 ->delete();
-        $response = ["message" =>'User has been deleted'];
-        return response($response, 200);
+        $message ='User has been deleted';
+        return $message;
     }
 }

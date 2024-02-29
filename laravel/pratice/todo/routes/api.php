@@ -42,13 +42,13 @@ Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); /
 // Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmail');
 // Route::post('/reset_password','Auth\ResetPasswordController@resetPassword'); 
 
-Route::prefix('task')->group(function () {
+Route::prefix('tasks')->group(function () {
     // GET
     Route::get('/','TaskController@getTasks'); 
 
     Route::get('/{task_id}','TaskController@getSpecificTask'); 
 
-    Route::get('/mapping/{user_id}','TaskController@getUserTask'); // need to test
+    Route::get('/mapping/{user_id}','TaskController@getUserTasks'); // need to test
 
     Route::middleware('auth:api')->group(function () {
         // POST

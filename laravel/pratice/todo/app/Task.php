@@ -26,12 +26,14 @@ class Task extends Model
     }
 
     public static function getTasks(){
-        $tasks = self::all();
+        $tasks = self::query()->with('taskMappings')->get();
         return $tasks;
     }
     
     public static function getTaskID($task_id){
-        $task = self::where('id', $task_id)->first();
+        $task = self::where('id', $task_id)
+                ->with('taskMappings')
+                ->first();
         return $task;
     }
 
@@ -50,7 +52,12 @@ class Task extends Model
             $task->parent_id = $task_data['parent_id'];
         }
         $task->save();
-        return $task;
+
+        $taskWithAssignes = self::where('id', $task->id)
+                ->with('taskMappings')
+                ->first();
+        
+        return $taskWithAssignes;
     }
 
     public static function editTask($task_data,$task_id){
@@ -62,8 +69,11 @@ class Task extends Model
             }
         }
         
-        $task =  Task::find($task_id);
-        return $task;
+        $taskWithAssignes = self::where('id', $task_id)
+                ->with('taskMappings')
+                ->first();
+        
+        return $taskWithAssignes;
     }
 
     public static function editStatus($status,$task_id){
@@ -83,8 +93,11 @@ class Task extends Model
                     ]);
         }
 
-        $task = Task::find($task_id);
-        return $task;
+        $taskWithAssignes = self::where('id', $task_id)
+                ->with('taskMappings')
+                ->first();
+                
+        return $taskWithAssignes;
     }
     
     public static function deleteTask($task_id)

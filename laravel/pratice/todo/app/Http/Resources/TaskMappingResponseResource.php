@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use App\Traits\formatTime;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TaskResponseResource extends JsonResource
+class TaskMappingResponseResource extends JsonResource
 {
     use formatTime;
     /**
@@ -18,11 +18,11 @@ class TaskResponseResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "title" => $this->ttle,
-            "description" => $this->description,
-            "urgency" => $this->urgency,
-            "parent_id" => $this->parent_id,
-            "due_time" => $this->formatTime($this->due_time),
+            "user_id" => $this->user_id,
+            "role" => $this->role,
+            "status" => $this->status,
+            "assigned_at" => $this->formatTime($this->assigned_at),
+            "time_completed" => $this->formatTime($this->time_completed),
         ];
     }
 }
