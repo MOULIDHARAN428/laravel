@@ -8,7 +8,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class SendTaskAssignNotificationEmail implements ShouldQueue
@@ -33,9 +32,7 @@ class SendTaskAssignNotificationEmail implements ShouldQueue
      */
     public function handle()
     {
-        $user = Auth::user();
         Mail::to($this->user['email'])
-        ->bcc($user->email)
         ->send(new TaskAssignNotification($this->user));
     }
 }

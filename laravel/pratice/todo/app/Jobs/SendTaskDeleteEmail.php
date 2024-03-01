@@ -8,7 +8,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class SendTaskDeleteEmail implements ShouldQueue
@@ -35,9 +34,8 @@ class SendTaskDeleteEmail implements ShouldQueue
      */
     public function handle()
     {
-        $auth_user = Auth::user();
         Mail::to($this->user['email'])
-            ->bcc($auth_user->email)
+            ->bcc($this->user['auth_user_mail'])
             ->send(new TaskDeleted($this->user,$this->task,$this->map));
     }
 }
