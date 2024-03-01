@@ -77,7 +77,7 @@ class Task extends Model
     }
 
     public static function editStatus($status,$task_id){
-
+        
         if($status=="1"){
             self::where('id', $task_id)
                     ->update([
@@ -92,11 +92,10 @@ class Task extends Model
                         'time_completed' => null
                     ]);
         }
-
         $taskWithAssignes = self::where('id', $task_id)
                 ->with('taskMappings')
                 ->first();
-                
+        
         return $taskWithAssignes;
     }
     
@@ -112,7 +111,7 @@ class Task extends Model
 
             //recursive function
             if($taskID != $task_id){
-                self::delete_task($sub_task_ID);
+                self::deleteTask($sub_task_ID);
             }
             
             self::where('id', $taskID)

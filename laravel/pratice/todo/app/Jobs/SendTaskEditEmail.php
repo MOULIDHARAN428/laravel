@@ -15,6 +15,7 @@ class SendTaskEditEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $task, $user, $map;
+    public $tries = 3; 
     /**
      * Create a new job instance.
      *

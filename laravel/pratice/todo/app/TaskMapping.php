@@ -72,12 +72,12 @@ class TaskMapping extends Model
                         ->increment('yet_to_do_task');
 
             $task_map = self::find($task_map_id);
-            $task_map['old_user'] = $old_user;
-            
+            $task_map['old_user'] = $old_user[0];
+            $task_map['user_change'] = "edit";
             return $task_map;
         }
 
-        $editableFields = ['task_id', 'role', 'assigned_at'];
+        $editableFields = ['task_id', 'role', 'assigned_at','time_completed'];
         foreach ($editableFields as $field) {
             if (isset($map_data[$field])) {
                 self::where('id', $task_map_id)->update([$field => $map_data[$field]]);
@@ -158,15 +158,12 @@ class TaskMapping extends Model
     public static function deleteTaskMap($task_map_id)
     {
         $user_id = self::where('id', $task_map_id)->pluck('user_id');
-
         $id_for_mail_content = self::where('id',$task_map_id)
                     ->get(['user_id','task_id','id'])->first();
-        
         UserTaskAnalytic::where('user_id', $user_id)
                         ->decrement('yet_to_do_task');
-                        
-        self::where('id', $task_map_id)
-            ->delete();
+        // self::where('id', $task_map_id)
+        //     ->delete();
         
         return $id_for_mail_content;
 

@@ -15,6 +15,7 @@ class SendTaskDeleteEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $task, $user, $map;
+    public $tries = 3; 
     /**
      * Create a new job instance.
      *
@@ -34,9 +35,9 @@ class SendTaskDeleteEmail implements ShouldQueue
      */
     public function handle()
     {
-        $user = Auth::user();
+        $auth_user = Auth::user();
         Mail::to($this->user['email'])
-            ->bcc($user->email)
+            ->bcc($auth_user->email)
             ->send(new TaskDeleted($this->user,$this->task,$this->map));
     }
 }

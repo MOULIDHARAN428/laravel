@@ -52,14 +52,15 @@ class TaskResponseWithAssignesResource extends JsonResource
                 ];
             })->toArray();
         }
-
         return [
             "id" => $this['id'],
             "title" => $this['title'],
             "description" => $this['description'],
             "urgency" => $this['urgency'],
+            "status" => $this['status'],
             "parent_id" => $this['parent_id'] ?? '',
             "due_time" => $this->formatTime($this['due_time']),
+            "time_completed" => $this->formatTime($this['time_completed']),
             "assignes" => $assignes,
         ];
         

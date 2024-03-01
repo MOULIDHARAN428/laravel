@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Mail;
 class SendTaskAssignEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public $tries = 3;  
     protected $task, $user, $map;
-    /**
+    /** 
      * Create a new job instance.
      *
      * @return void

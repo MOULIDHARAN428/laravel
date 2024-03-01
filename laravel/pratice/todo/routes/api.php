@@ -35,7 +35,7 @@ Route::get('/plain',function(){
 
 
 Route::post('/register', 'Auth\RegisterController@register'); //done
-Route::get('/login',  'Auth\LoginController@login')->name('login'); //done
+Route::post('/login',  'Auth\LoginController@login')->name('login'); //done
 Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); //done
 
 // forgot password and reset password
