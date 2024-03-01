@@ -2,19 +2,11 @@
 
 namespace App;
 
-use App\Jobs\SendTaskAssignEmail;
-use App\Jobs\SendTaskDeleteEmail;
-use App\Jobs\SendTaskEditEmail;
-use App\Mail\TaskAssigned;
-use App\Mail\TaskDeleted;
-use App\Mail\TaskEdited;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Task;
 use App\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 class TaskMapping extends Model
 {

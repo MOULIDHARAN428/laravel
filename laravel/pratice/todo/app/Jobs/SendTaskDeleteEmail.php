@@ -35,7 +35,7 @@ class SendTaskDeleteEmail implements ShouldQueue
     public function handle()
     {
         Mail::to($this->user['email'])
-            ->bcc($this->user['auth_user_mail'])
+            ->cc([$this->user['auth_user_mail']])
             ->send(new TaskDeleted($this->user,$this->task,$this->map));
     }
 }

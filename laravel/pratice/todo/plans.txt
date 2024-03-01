@@ -1,10 +1,24 @@
-change due time send mail, delete task send mail
+#MODEL 
+    #INTERACTION WITH DB
+    #RELATIONS
+#CONTROLLER
+    #VALIDATION
+    #INTERACTION WITH #MODEL
+    #INTERACTION WITH TRAITS ???
+    #INTERACTION WITH RESOURCES
+    #RETURN
+#RESOURCES
+    #FORMATTING
+    #NO INTERACTION WITH DB
+#TRAITS -> BETWEEN CONTROLLERS, MODELS
+    #REPETITIVE LOGIC AS FUNCTIONS
 
-testing : edit status
+#FUNCTION NAMING - getTaskData()
+#variable name = $is_correct_variable
 
-// done
+forgot and reset password 
+f
 
-Queue : Email 
 
 email : mail verification and reset password links
 

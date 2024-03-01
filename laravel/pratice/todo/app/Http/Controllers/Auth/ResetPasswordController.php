@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\ResetsPasswords;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ResetPasswordController extends Controller
 {
@@ -39,25 +41,34 @@ class ResetPasswordController extends Controller
         $this->middleware('guest');
     }
     public function resetPassword(Request $request){
-        // $request->validate($this->rules(), $this->validationErrorMessages());
+        $validator = Validator::make($request->all(),[
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|string|min:6',
+            'token' => 'required'
+        ]);
 
-        // Check if the user with the given email exists
-        $user = User::where('email', $request['email'])->first();
-        
-
-        if (!$user) {
-            return response()->json(['message' => 'Email not found'], 404);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);  
         }
 
-        // Generate a password reset token and send reset password email
-
-        $token = $user->createToken('Login')->accessToken;
-        $user->password = bcrypt($request['password']);
-
-        // $user->sendPasswordResetNotification($token);
-        $response = ['token' => $token];
-        $response = ['message' => 'Password reset link sent to your email'];
+        $updatePassword = DB::table('password_resets')
+                            ->where(['email' => $request->email, 'token' => $request->token])
+                            ->first();
         
-        return response($response, 200);
+        if(!$updatePassword){
+            return "invalid token";
+        }
+
+        User::where('email', $request->email)
+            ->update(['password' => bcrypt($request->password)]);
+        
+        DB::table('password_resets')->where(['email'=> $request->email])->delete();
+        
+        return "Resetted the password successfully!";
     }
 }

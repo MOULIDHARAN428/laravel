@@ -25,9 +25,9 @@ Route::get('/plain',function(){
     return "Please Log in!";
 })->name('plain');
 
-// Route::get('/user', function (Request $request) {
-//     return "Logged In";
-// })->middleware('auth:api');
+Route::get('/user', function (Request $request) {
+    return "Logged In";
+})->middleware('auth:api');
 
 // Route::get('/admin',function(){
 //     return "admin...";
@@ -39,8 +39,8 @@ Route::post('/login',  'Auth\LoginController@login')->name('login'); //done
 Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); //done
 
 // forgot password and reset password
-// Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmail');
-// Route::post('/reset_password','Auth\ResetPasswordController@resetPassword'); 
+Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmail');
+Route::post('/reset-password','Auth\ResetPasswordController@resetPassword'); 
 
 Route::prefix('tasks')->group(function () {
     // GET
