@@ -70,8 +70,8 @@ class Task extends Model
         }
         
         $taskWithAssignes = self::where('id', $task_id)
-                ->with('taskMappings')
-                ->first();
+                            ->with('taskMappings')
+                            ->first();
         
         return $taskWithAssignes;
     }

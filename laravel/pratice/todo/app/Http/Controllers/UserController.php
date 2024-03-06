@@ -10,4 +10,5 @@ class UserController extends Controller
         // return "hiii";
         dd("Hii");
     }
+
 }

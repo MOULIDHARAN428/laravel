@@ -61,7 +61,10 @@ class ResetPasswordController extends Controller
                             ->first();
         
         if(!$updatePassword){
-            return "invalid token";
+            return response()->json([
+                'ok' => false,
+                'error' => "invalid token"
+            ],404); 
         }
 
         User::where('email', $request->email)
@@ -69,6 +72,8 @@ class ResetPasswordController extends Controller
         
         DB::table('password_resets')->where(['email'=> $request->email])->delete();
         
-        return "Resetted the password successfully!";
+        return response()->json(['ok' => true,'message' => "Password has been reset"],200); 
+        
     }
+    
 }

@@ -23,16 +23,16 @@ trait sendMailTrait
     //needs to send mail to the auth user also :)
     public function sendAssignMail($id_data){
         $this->assignVariables($id_data);
-        SendTaskAssignEmail::dispatch($this->user_data->toArray(),$this->task_data->toArray(),$this->map_data->toArray())->onConnection('database');
+        // SendTaskAssignEmail::dispatch($this->user_data->toArray(),$this->task_data->toArray(),$this->map_data->toArray())->onConnection('database');
     }
     public function sendAssignNotificationMail($user_id){
         $this->user_data = User::where('id',$user_id)->get(['name','email'])->first();
-        SendTaskAssignNotificationEmail::dispatch($this->user_data->toArray())->onConnection('database');
+        // SendTaskAssignNotificationEmail::dispatch($this->user_data->toArray())->onConnection('database');
     }
 
     public function sendEditMail($id_data){
         $this->assignVariables($id_data);
-        SendTaskEditEmail::dispatch($this->user_data->toArray(), $this->task_data->toArray(), $this->map_data->toArray())->onConnection('database');
+        // SendTaskEditEmail::dispatch($this->user_data->toArray(), $this->task_data->toArray(), $this->map_data->toArray())->onConnection('database');
     }
 
     public function sendDeleteMail($id_data){
@@ -42,7 +42,7 @@ trait sendMailTrait
             TaskMapping::where('id', $id_data['id'])
                 ->delete();
         }
-        SendTaskDeleteEmail::dispatch($this->user_data->toArray(),$this->task_data->toArray(),$this->map_data->toArray())->onConnection('database');
+        // SendTaskDeleteEmail::dispatch($this->user_data->toArray(),$this->task_data->toArray(),$this->map_data->toArray())->onConnection('database');
 
     }
 }

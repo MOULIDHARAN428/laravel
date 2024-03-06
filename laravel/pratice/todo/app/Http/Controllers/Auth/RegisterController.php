@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
 class RegisterController extends Controller
 {
     /*
@@ -64,7 +66,12 @@ class RegisterController extends Controller
         ]);
 
         if ($validate->fails()) {
-            return response()->json(['error' => $validate->errors()], 400);
+            $errors = $validate->errors()->all();
+            $error_message = implode(' ', $errors);
+            return response()->json([
+                'ok' => false,
+                'error' => $error_message
+            ],404);
         }
         
         
@@ -73,11 +80,15 @@ class RegisterController extends Controller
         $newUser->name = $request['name'];
         $newUser->email = $request['email'];
         $newUser->password = bcrypt($request['password']);
-        if($request['profile_picture']){
-            $profile_picture = $request['profile_picture'];
+
+        if ($request->hasFile('profile_picture')) {
+            $profile_picture = $request->file('profile_picture');
             $path = $profile_picture->store('profile_pictures', 'public');
-            $profile_picture = $path;
+            $profile_picture_path = $path;
+            $newUser->profile_picture = $profile_picture_path;
         }
+        
+        
         $newUser->save();
         $userID = $newUser->id;
         
@@ -87,5 +98,17 @@ class RegisterController extends Controller
         $task_analytics->save();
 
         return response()->json(['message' => 'User registered successfully'], 201);
+    }
+
+    public function uploadProfilePicture(Request $request){
+        $user = Auth::user();
+
+        $profile_picture = $request->file('profile_picture');
+        $path = $profile_picture->store('profile_pictures', 'public');
+        $profile_picture_path = $path;
+        
+        User::where('email', $user->email)
+            ->update(['profile_picture' => $profile_picture_path]);
+        return response()->json(['messgae' => 'User profile picture has been updated!'],200);
     }
 }

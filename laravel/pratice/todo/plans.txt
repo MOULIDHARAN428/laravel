@@ -1,3 +1,15 @@
+Blade Files
+
+Auth
+    - register
+    - login
+    - logout
+    - reset password
+    - forgot password
+
+Task
+    
+
 #MODEL 
     #INTERACTION WITH DB
     #RELATIONS
@@ -15,10 +27,6 @@
 
 #FUNCTION NAMING - getTaskData()
 #variable name = $is_correct_variable
-
-forgot and reset password 
-f
-
 
 email : mail verification and reset password links
 

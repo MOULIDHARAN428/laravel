@@ -51,7 +51,7 @@ class LoginController extends Controller
         ]);
         if ($validator->fails())
         {
-            return response(['errors'=>$validator->errors()->all()], 422);
+            return response(['error'=>$validator->errors()->all()], 422);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -60,13 +60,14 @@ class LoginController extends Controller
             if (Hash::check($request->password, $user->password)) {
                 $token = $user->createToken('Login')->accessToken;
                 $response = ['token' => $token];
+                $request->session()->put('bearer_token', $token);
                 return response($response, 200);
             } else {
-                $response = ["message" => "Password mismatch"];
+                $response = ["error" => "Password mismatch"];
                 return response($response, 422);
             }
         } else {
-            $response = ["message" =>'User does not exist'];
+            $response = ["error" =>'User does not exist'];
             return response($response, 422);
         }
     }
