@@ -20,8 +20,18 @@ class TaskController extends Controller
 {
     use sendMailTrait;
     //CRUD
+
+
+    public function getTasksWithSubTasks(){
+        $task = Task::getTasksWithSubTasks();
+        return response()->json([
+            'ok' => true,
+            'task' => $task
+        ], 200);
+    }
     public function getTasks(){
         $tasks = Task::getTasks();
+        
         return response()->json([
             'ok' => true,
             'task' => count($tasks) > 0 ? TaskResponseWithAssignesResource::collection($tasks) : "No task"
@@ -42,6 +52,7 @@ class TaskController extends Controller
             'task' => TaskResponseWithAssignesResource::make($task)
         ], 200);
     }
+    
     
     public function getUserTasks($user_id){
         $validator = Validator::make(['user_id' => $user_id], [

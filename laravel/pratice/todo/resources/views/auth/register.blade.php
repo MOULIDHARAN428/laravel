@@ -1,89 +1,92 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">{{ __('Register') }}</div>
 
-<form>
-    @csrf
+                <div class="card-body">
+                    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
+                        @csrf
+                        @error('error')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $error }}</strong>
+                            </span>
+                        @enderror
 
-    <div id="error" class="alert-messgae"> </div>
-    
-    <div class="form-group row" style="padding-top:30px;">
-        <div class="col-sm-2"></div>
-        <label for="email" class="col-sm-1 col-form-label">Full Name</label>
-        <div class="col-sm-5">
-          <input type="name" class="form-control" id="name" placeholder="Full Name" name="name">
-        </div>
-    </div>
+                        <div class="form-group row">
+                            <label for="name" class="col-md-4 col-form-label text-md-right">{{ __('Name') }}</label>
 
-    <div class="form-group row" style="padding-top:30px;">
-        <div class="col-sm-2"></div>
-        <label for="email" class="col-sm-1 col-form-label">Email</label>
-        <div class="col-sm-5">
-          <input type="email" class="form-control" id="email" placeholder="Email" name="email">
-        </div>
-    </div>
+                            <div class="col-md-6">
+                                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
 
-    <div class="form-group row" style="padding-top:30px;">
-        <div class="col-sm-2"></div>
-        <label for="password" class="col-sm-1 col-form-label">Password</label>
-        <div class="col-sm-5">
-          <input type="password" class="form-control" id="password" placeholder="Password" name="password">
-        </div>
-    </div>
+                                
+                            </div>
+                        </div>
 
-    <div class="form-group row" style="padding-top:30px;">
-        <div class="col-sm-2"></div>
-        <label for="profile_picture" class="col-sm-1 col-form-label">Profile Picture</label>
-        <div class="col-sm-5">
-          <input type="file" class="form-control" id="profile_picture" placeholder="Profile Picture" name="profile_picture" accept="image/*">
-        </div>
-    </div>
+                        <div class="form-group row">
+                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
 
+                            <div class="col-md-6">
+                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
 
-    <div class="form-group row formLabel" style="padding-top:40px;">
-        <div class="col-sm-3"></div>
-        <div class="col-sm-6">
-              <button type="submit" class="btn btn-primary" onclick="registerUser()">Sign in</button><br>
-              <div style="padding-top:10px;">
-                <a href="/forgot-password" class="btn btn-primary">Forgot Password</a>
-                Already have account? 
-              </div>
+                                @error('email')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+
+                            <div class="col-md-6">
+                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+
+                                @error('password')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
+
+                            <div class="col-md-6">
+                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="profile_picture" class="col-md-4 col-form-label text-md-right">{{ __('Profile Picture') }}</label>
+
+                            <div class="col-md-6">
+                                <input id="profile_picture" type="file" class="form-control @error('profile_picture') is-invalid @enderror" name="profile_picture" required autocomplete="profile_picture">
+
+                                @error('profile_picture')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row mb-0">
+                            <div class="col-md-6 offset-md-4">
+                                <button type="submit" class="btn btn-primary">
+                                    {{ __('Register') }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-
-</form>
-
-<script>
-  function registerUser(){
-    var name = $('#name').val();
-    var email = $('#email').val();
-    var password = $('#password').val();
-    var file = $('#profile_picture');
-    let resp = $.ajax({
-        type: 'POST',
-        url: '/api/register',
-        data: {
-            name, name,
-            email: email,
-            password: password,
-            profile_picture: file
-        }
-    });
-
-    resp.done(function(resp){
-      console.log(resp);
-    });
-
-    resp.fail(function(data){
-          document.getElementById("error").innerHTML = `
-          <div class="alert alert-danger alert-content" role="alert">`
-            +data['responseJSON']['error']+
-          `</div>`;
-    });
-    
-    event.preventDefault();
-  }
-</script>
-
+</div>
 @endsection

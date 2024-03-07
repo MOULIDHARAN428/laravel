@@ -33,7 +33,7 @@ class ForgotPasswordController extends Controller
     {
         $this->middleware('guest');
     }
-    public function sendResetLinkEmail(Request $request){
+    public function sendResetLinkEmailPassport(Request $request){
         $validator = Validator::make($request->all(),[
             'email' => 'required|email|exists:users,email'
         ]);

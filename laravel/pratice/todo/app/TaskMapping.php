@@ -23,6 +23,20 @@ class TaskMapping extends Model
         return $tasks;
     }
 
+    public static function getAssignes($task_id){
+        $assignes = self::where('task_id',$task_id)->get();
+        $assignes_with_name = [];
+        foreach($assignes as $assigne){
+            $assigne_user_data = $assigne->toArray();
+            $user_id = $assigne_user_data['user_id'];
+            $user = User::find($user_id);
+            $assigne_user_data['name'] = $user->name;
+            $assignes_with_name[$user_id] = $assigne_user_data;
+        }
+        return $assignes_with_name;
+
+    }
+
     public static function createTaskMap($map_data){
         //user_id, task_id, id
         $task_map = new TaskMapping();

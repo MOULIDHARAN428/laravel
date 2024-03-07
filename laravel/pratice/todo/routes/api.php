@@ -34,13 +34,16 @@ Route::get('/user', function (Request $request) {
 // })->middleware('admin');
 
 
-Route::post('/register', 'Auth\RegisterController@register'); //done
-Route::post('/login',  'Auth\LoginController@login')->name('login'); //done
-Route::post('/logout', 'Auth\LoginController@logout')->middleware('auth:api'); //done
+Route::post('/register', 'Auth\RegisterController@registerPassport'); //done
+Route::post('/login',  'Auth\LoginController@loginPassport')->name('login'); //done
+Route::post('/logout', 'Auth\LoginController@logoutPassport')->middleware('auth:api'); //done
 
 // forgot password and reset password
-Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmail');
-Route::post('/reset-password','Auth\ResetPasswordController@resetPassword'); 
+Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmailPassport');
+Route::post('/reset-password','Auth\ResetPasswordController@resetPasswordPassport'); 
+
+
+
 
 Route::prefix('tasks')->group(function () {
     // GET

@@ -40,7 +40,7 @@ class ResetPasswordController extends Controller
     {
         $this->middleware('guest');
     }
-    public function resetPassword(Request $request){
+    public function resetPasswordPassport(Request $request){
         $validator = Validator::make($request->all(),[
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:6',

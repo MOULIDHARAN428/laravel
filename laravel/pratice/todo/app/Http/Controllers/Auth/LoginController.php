@@ -43,7 +43,7 @@ class LoginController extends Controller
     {
         $this->middleware('guest', ['except' => 'logout']);
     }
-    public function login(Request $request){
+    public function loginPassport(Request $request){
         // return view('auth.login');
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255',
@@ -60,7 +60,6 @@ class LoginController extends Controller
             if (Hash::check($request->password, $user->password)) {
                 $token = $user->createToken('Login')->accessToken;
                 $response = ['token' => $token];
-                $request->session()->put('bearer_token', $token);
                 return response($response, 200);
             } else {
                 $response = ["error" => "Password mismatch"];
@@ -72,7 +71,7 @@ class LoginController extends Controller
         }
     }
 
-    public function logout(Request $request)
+    public function logoutPassport(Request $request)
     {
         $token = $request->user()->token();
         $token->revoke();

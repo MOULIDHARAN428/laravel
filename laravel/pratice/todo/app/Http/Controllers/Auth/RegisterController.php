@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -49,6 +51,16 @@ class RegisterController extends Controller
      * @return \Illuminate\Contracts\Validation\Validator
      */
 
+     protected function validator(array $data)
+     {
+         return Validator::make($data, [
+             'name' => ['required', 'string', 'max:255'],
+             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+             'password' => ['required', 'string', 'min:8', 'confirmed'],
+             "profile" => ["nullable","max:5000","mimes:jpeg,jpg,png"],
+         ]);
+     }
+
     /**
      * Create a new user instance after a valid registration.
      *
@@ -56,7 +68,34 @@ class RegisterController extends Controller
      * @return User
      */
     
-    public function register(Request $request)
+    
+     protected function create(array $data)
+    {
+        Log::info("register here");
+        if($data['profile_picture'] != null){
+            Log::info("register here if");
+            $filenamewithext = $data['profile_picture']->getClientOriginalName();
+            $filename = pathinfo($filenamewithext, PATHINFO_FILENAME);
+            $ext = pathinfo($filenamewithext, PATHINFO_EXTENSION);
+            $filenametostore = $filename."_".time().".".$ext;
+            $path = $data['profile_picture']->storeAs("public/profile", $filenametostore);
+
+        }
+        else{
+            Log::info("register here else");
+            $filenametostore = 'user.jpg';
+        }
+        Log::info("register here after");
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'profile_picture' => $filenametostore,
+        ]);
+    }
+
+
+    public function registerPassport(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'name' => 'required|max:255',

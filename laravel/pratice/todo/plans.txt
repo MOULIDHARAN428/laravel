@@ -1,14 +1,18 @@
-Blade Files
 
-Auth
-    - register
-    - login
-    - logout
-    - reset password
-    - forgot password
 
-Task
-    
+task page
+task title with avatar (assigned user)
+sub tasks
+
+Users - label
+show registered user
+
+Task -> 
+task details
+user - role - status
+profile - compelted, yet to do, over dued task
+
+
 
 #MODEL 
     #INTERACTION WITH DB
@@ -45,3 +49,14 @@ due_task : task_scheduling daily at 23:59
 weekly : assign 0 weekly sunday at 23:59
 monthly : assign 0 monthy last date at 23:59
 quaterly : assign 0 quaterly last date of march,july,december at 23:59
+
+
+
+Task
+    -content
+    -user
+    (or)
+    -sub task
+        -content
+        -user
+

@@ -5,10 +5,11 @@ namespace App;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\TaskMapping;
+use App\Traits\formatTime;
 
 class Task extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, formatTime;
     public function taskMappings(){
         return $this->hasMany(TaskMapping::class,'task_id','id');
     }
@@ -24,9 +25,36 @@ class Task extends Model
     {
         return $this->belongsTo(Task::class, 'parent_id', 'id');
     }
+    public static function getTasksWithSubTasks(){
+        $tasks = self::all();
+        $task_with_subtask = [];
 
+        foreach ($tasks as $t) {
+            $task =  $t->toArray();
+            $formate_time = new Task();
+            
+            //formate time
+            if(isset($task['time_completed'])){
+                $task['time_completed'] = $formate_time->formatTime($task['time_completed']);
+            }if(isset($task['due_time'])){
+                $task['due_time'] = $formate_time->formatTime($task['due_time']);
+            }
+
+            //putting subtasks into task
+            if (!isset($task_with_subtask[$task['parent_id']])) {
+                $task['assignes'] = TaskMapping::getAssignes($task['id']);
+                $task_with_subtask[$task['id']] = $task;
+                $task_with_subtask[$task['id']]['sub_tasks'] = [];
+            } else {
+                $task['assignes'] = TaskMapping::getAssignes($task['id']);
+                $task_with_subtask[$task['parent_id']]['sub_tasks'][] = $task;
+            }
+        }
+        return $task_with_subtask;
+    }
     public static function getTasks(){
         $tasks = self::query()->with('taskMappings')->get();
+        // dd($tasks);
         return $tasks;
     }
     
