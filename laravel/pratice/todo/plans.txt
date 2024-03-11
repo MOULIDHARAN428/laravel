@@ -1,8 +1,19 @@
+task with users - 2nd day 
+users and their analytics - 3rd day
+self users analytics : users page - 3rd day
 
+create task
+
+edit task
+delete task
+assign user
+edit the details
 
 task page
 task title with avatar (assigned user)
 sub tasks
+
+pagination
 
 Users - label
 show registered user

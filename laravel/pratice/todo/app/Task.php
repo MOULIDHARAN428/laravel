@@ -50,6 +50,10 @@ class Task extends Model
                 $task_with_subtask[$task['parent_id']]['sub_tasks'][] = $task;
             }
         }
+
+        // to have the latest task first
+        $task_with_subtask = array_reverse($task_with_subtask);
+
         return $task_with_subtask;
     }
     public static function getTasks(){

@@ -25,6 +25,15 @@ Auth::routes();
 Route::get('/task','TaskViewController@tasks');
 
 Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
+Route::get('/users_with_profile','TaskController@getUsersWithProfile');
+
+
+
+
+
+
+
+
 
 // routes for getting the data
 Route::prefix('tasks')->group(function () {

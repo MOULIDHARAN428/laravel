@@ -63,7 +63,7 @@
             font-size: 17px;
             border: 1px solid grey;
             border-left: none; /* Prevent double borders */
-            cursor: pointer;
+            cursor: poicontainernter;
         }
 
         form.example button:hover {
@@ -99,6 +99,19 @@
         .card-seperater{
             margin-top: 50px;
         }
+        .navbar-nav .nav-link img {
+            margin-left: 5px; /* Adjust the margin as needed */
+        }
+        .user_registered{
+            padding-top:40px;
+        }
+        .user_registered_box{
+            padding: 10px;
+            border: solid;
+        }
+        .user_registered_box h3{
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -132,8 +145,11 @@
                             @endif
                         @else
                             <li class="nav-item dropdown">
+
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }} <span class="caret"></span>
+                                    {{ Auth::user()->name }}
+                                    <img src="{{ asset('storage/profile/' . Auth::user()->profile_picture) }}" alt="Profile Picture" class="rounded-circle" width="30">
+                                    <span class="caret"></span>
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
@@ -154,10 +170,10 @@
             </div>
         </nav>
 
-        <main class="py-4">
+        <main class="py-4" style="padding-left: 0; margin-left: 0;">
             @yield('content')
         </main>
     </div>
-    
+
 </body>
 </html>

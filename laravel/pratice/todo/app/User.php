@@ -50,12 +50,17 @@ class User extends Authenticatable
         return $this->hasManyThrough(Task::class,TaskMapping::class,'user_id','id','id','task_id');
     }
    
-    public function deleteUserAccount(Request $request){
+    public static function deleteUserAccount(Request $request){
         $user = Auth::user();
         $user_id = $user->id;
         self::where('id',$user_id)
                 ->delete();
         $message ='User has been deleted';
         return $message;
+    }
+
+    public static function getUsersWithProfile(){
+        $user = self::get(['id','name','profile_picture']);
+        return $user;
     }
 }

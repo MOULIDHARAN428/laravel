@@ -21,14 +21,6 @@ class TaskController extends Controller
     use sendMailTrait;
     //CRUD
 
-
-    public function getTasksWithSubTasks(){
-        $task = Task::getTasksWithSubTasks();
-        return response()->json([
-            'ok' => true,
-            'task' => $task
-        ], 200);
-    }
     public function getTasks(){
         $tasks = Task::getTasks();
         
@@ -68,6 +60,22 @@ class TaskController extends Controller
             'ok' => true,
             'task' => TaskMappingResponseResource::collection($tasks)
         ], 200);
+    }
+
+    public function getTasksWithSubTasks(){
+        $task = Task::getTasksWithSubTasks();
+        return response()->json([
+            'ok' => true,
+            'task' => $task
+        ], 200);
+    }
+
+    public function getUsersWithProfile(){
+        $users = User::getUsersWithProfile();
+        return response()->json([
+            'ok' => true,
+            'users' => $users
+        ]);
     }
 
     public function createTask(Request $request){

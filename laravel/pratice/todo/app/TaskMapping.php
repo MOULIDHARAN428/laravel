@@ -31,6 +31,7 @@ class TaskMapping extends Model
             $user_id = $assigne_user_data['user_id'];
             $user = User::find($user_id);
             $assigne_user_data['name'] = $user->name;
+            $assigne_user_data['profile_picture'] = $user->profile_picture;
             $assignes_with_name[$user_id] = $assigne_user_data;
         }
         return $assignes_with_name;
