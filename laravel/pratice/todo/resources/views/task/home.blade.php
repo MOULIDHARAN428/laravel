@@ -8,7 +8,7 @@
     </div>
     <div class="col-12 col-sm-8">
         <div class="d-flex justify-content-end align-items-end">
-            <button type="button" class="btn btn-secondary btn-lg">
+            <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
                 Create Task <i class="fa fa-plus" style="margin-left: 5px;"></i>
             </button>
         </div>            
@@ -16,7 +16,140 @@
     </div>
 </div>
 
+{{-- Modal --}}
+
+{{--
+title
+description
+urgency
+parent_id 
+--}}
+
+<div class="modal fade bd-example-modal-lg" id="createTaskModal" tabindex="-1" role="dialog" aria-labelledby="createTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTaskModalLabel">Create Task</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="created-successfully" style="color : green; text-align : center;"></div>
+                <form >
+                    @csrf
+                    <div class="form-group row">
+                      <label for="inputTitle" class="col-sm-2 col-form-label">Title</label>
+                      <div class="col-sm-10">
+                        <input type="text" class="form-control" id="title" placeholder="Task Title" required>
+                        <div style="color: red" id="title_error"> </div>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="inputDescription" class="col-sm-2 col-form-label">Description</label>
+                        <div class="col-sm-10">
+                          <textarea class="form-control" id="description" placeholder="Task Description" rows="2" required></textarea>
+                          <div style="color: red" id="description_error"> </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="inputDueTime" class="col-sm-2 col-form-label">Due Time</label>
+                        <div class="col-sm-10">
+                          <input type="datetime-local" class="form-control" id="due_time" placeholder="Task Due Time" required></input>
+                          <div style="color: red" id="due_time_error"> </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="inputUrgency" class="col-sm-2 col-form-label">Urgency</label>
+                        <div class="col-sm-10">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="customRadioInline0" name="urgency" class="custom-control-input urgency-radio" value="0">
+                                <label class="custom-control-label" for="customRadioInline0">0</label>
+                            </div>
+                            
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="customRadioInline1" name="urgency" class="custom-control-input urgency-radio" value="1">
+                                <label class="custom-control-label" for="customRadioInline1">1</label>
+                            </div>
+                            <div style="color: red" id="urgency_error"> </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="inputParentID" class="col-sm-2 col-form-label">Parent ID</label>
+                        <div class="col-sm-10">
+                          <input type="number" class="form-control" id="parent_id" placeholder="Tasks' Parent ID">
+                          <div style="color: red" id="parent_id_error"> </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
+                <button type="button" class="btn btn-primary" onclick="createTask()">Create</button>
+            </div>
+        </div>$("input[name='urgency']:checked").val()
+    </div>
+</div>
+
 <script>
+    function createTask(){
+        document.getElementById("title_error").innerHTML = "";
+        document.getElementById("description_error").innerHTML = "";
+        document.getElementById("due_time_error").innerHTML = "";
+        document.getElementById("urgency_error").innerHTML = "";
+        document.getElementById("parent_id_error").innerHTML = "";
+        
+        var parent_id = $('#parent_id').val();
+        var due_time = $('#due_time').val();
+
+        var data = {
+            title: $('#title').val(),
+            description: $('#description').val(),
+            urgency: $("input[name='urgency']:checked").val()
+        };
+        if(due_time){
+            var selectedDate = new Date(due_time);
+            var formattedDateTime =
+                selectedDate.getFullYear() + '-' +
+                ('0' + (selectedDate.getMonth() + 1)).slice(-2) + '-' +
+                ('0' + selectedDate.getDate()).slice(-2) + ' ' +
+                ('0' + selectedDate.getHours()).slice(-2) + ':' +
+                ('0' + selectedDate.getMinutes()).slice(-2) + ':' +
+                ('0' + selectedDate.getSeconds()).slice(-2);
+            data.due_time = formattedDateTime;
+        }
+        if (parent_id) {
+            data.parent_id = parent_id;
+        }
+
+        let resp = $.ajax({
+            type: 'POST',
+            url: '/tasks',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data:data,
+        });
+        resp.done(function(resp){
+            document.getElementById("created-successfully").innerHTML = "<h5>Created Successfully!</h5>";
+            getUserTask(0);
+        });
+        resp.fail(function(resp){
+            var response = JSON.parse(resp.responseText);
+            var errors = response.validation_errors;
+
+            for (var field in errors) {
+                var errorMessage = errors[field][0];
+                document.getElementById(field+"_error").innerHTML = "<div>"+errorMessage+"</div>";
+            }
+
+        });
+    }
     function getUserTask(user_id){
         // console.log(user_id);
         let resp = $.ajax({

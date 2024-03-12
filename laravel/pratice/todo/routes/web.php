@@ -32,9 +32,6 @@ Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
 Route::get('/task/{task_id}','TaskViewController@specific_task');
 
 
-
-
-
 // routes for getting the data
 Route::prefix('tasks')->group(function () {
     // GET

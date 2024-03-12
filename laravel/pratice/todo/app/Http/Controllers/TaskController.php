@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Traits\sendMailTrait;
+use Illuminate\Support\Facades\Log;
 
 class TaskController extends Controller
 {
@@ -35,7 +36,7 @@ class TaskController extends Controller
             'task_id' => 'integer|exists:tasks,id',
         ]);
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors()); 
         }
 
         $task = Task::getTaskID($task_id);
@@ -52,7 +53,7 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors()); 
         }
 
         $tasks = TaskMapping::getUserTask($user_id);
@@ -77,7 +78,7 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors()); 
         }
         $task = Task::getTaskWithUsers($task_id);
         return response()->json([
@@ -97,13 +98,14 @@ class TaskController extends Controller
     public function createTask(Request $request){
 
         $validator = Validator::make($request->all(),[
-            'title' => 'required',
-            'description' => 'required',
+            'title' => 'required|max:100',
+            'description' => 'required|max:100',
             'due_time'=> 'required|date_format:Y-m-d H:i:s',
+            'urgency' => 'required',
             'parent_id'=> 'sometimes|integer|exists:tasks,id'
         ]);
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors());
         }
         $task = Task::createTask($request);
 
@@ -122,7 +124,7 @@ class TaskController extends Controller
 
         ]);
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors()); 
         }
 
         $task_map = TaskMapping::createTaskMap($request);
@@ -154,7 +156,7 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all());  
+            return $this->appendAndSendErrorMessage($validator->errors());  
         }
         
         $task_map = Task::editTask($request,$task_id);
@@ -178,7 +180,7 @@ class TaskController extends Controller
 
         ]);
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all());  
+            return $this->appendAndSendErrorMessage($validator->errors());  
         }
 
         $task_map = TaskMapping::editMapTask($request,$task_map_id);
@@ -215,7 +217,7 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all());  
+            return $this->appendAndSendErrorMessage($validator->errors());  
         }
         
         $taskWithAssignes = TaskMapping::editMapStatus($request['status'],$task_map_id);
@@ -236,7 +238,7 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all());  
+            return $this->appendAndSendErrorMessage($validator->errors());  
         }
 
         $taskWithAssignes = Task::editStatus($request['status'],$task_id);
@@ -259,7 +261,7 @@ class TaskController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all());  
+            return $this->appendAndSendErrorMessage($validator->errors());  
         }
         Task::deleteTask($task_id);
 
@@ -282,7 +284,7 @@ class TaskController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+            return $this->appendAndSendErrorMessage($validator->errors()); 
         }
 
         $id_for_mail_content = TaskMapping::deleteTaskMap($task_map_id);
@@ -295,10 +297,9 @@ class TaskController extends Controller
     }
 
     public function appendAndSendErrorMessage($errors){
-        $error_message = implode(' ', $errors);
         return response()->json([
             'ok' => false,
-            'error' => $error_message
-        ],404);  
-    }   
+            'validation_errors' => $errors
+        ], 422);
+    } 
 }
