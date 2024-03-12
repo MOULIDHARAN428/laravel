@@ -58,12 +58,28 @@ class TaskController extends Controller
         $tasks = TaskMapping::getUserTask($user_id);
         return response()->json([
             'ok' => true,
-            'task' => TaskMappingResponseResource::collection($tasks)
+            'task' => TaskMappingResponseResource::collection($tasks),
+            'user' => $tasks['user'],
         ], 200);
     }
 
     public function getTasksWithSubTasks(){
         $task = Task::getTasksWithSubTasks();
+        return response()->json([
+            'ok' => true,
+            'task' => $task
+        ], 200);
+    }
+
+    public function getTaskWithUsers($task_id){
+        $validator = Validator::make(['task_id' => $task_id], [
+            'task_id' => 'integer|exists:tasks,id'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->appendAndSendErrorMessage($validator->errors()->all()); 
+        }
+        $task = Task::getTaskWithUsers($task_id);
         return response()->json([
             'ok' => true,
             'task' => $task

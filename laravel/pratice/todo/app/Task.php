@@ -56,6 +56,20 @@ class Task extends Model
 
         return $task_with_subtask;
     }
+
+    public static function getTaskWithUsers($task_id){
+        $task = self::where('id',$task_id)->first();
+        $formate_time = new Task();
+        if(isset($task['time_completed'])){
+            $task['time_completed'] = $formate_time->formatTime($task['time_completed']);
+        }if(isset($task['due_time'])){
+            $task['due_time'] = $formate_time->formatTime($task['due_time']);
+        }
+        
+        $task['assignes'] = TaskMapping::getAssignes($task_id);
+        return $task;
+    }
+
     public static function getTasks(){
         $tasks = self::query()->with('taskMappings')->get();
         // dd($tasks);

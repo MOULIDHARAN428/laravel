@@ -15,10 +15,15 @@ class TaskMappingResponseResource extends JsonResource
      * @return array
      */
     public function toArray($request)
-    {
+    {   
+        if(isset($this[0]['name'])){
+            return null;
+        }
         return [
             "id" => $this->id,
             "user_id" => $this->user_id,
+            "task_id" => $this->task_id,
+            "task_title" => $this->task_title['title'],
             "role" => $this->role,
             "status" => $this->status,
             "assigned_at" => $this->formatTime($this->assigned_at),

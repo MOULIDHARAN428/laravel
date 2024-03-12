@@ -20,7 +20,13 @@ class TaskMapping extends Model
 
     public static function getUserTask($user_id){
         $tasks = self::where('user_id', $user_id)->get();
-        return $tasks;
+        for($i = 0; $i < count($tasks); $i++){
+            $task_title = Task::where('id',$tasks[$i]->task_id)->first(['title']);
+            $tasks[$i]['task_title'] = $task_title;
+        }
+        $tasks_rev = $tasks->reverse();
+        $tasks_rev['user'] = User::where('id',$user_id)->get(['name','profile_picture']);
+        return $tasks_rev;
     }
 
     public static function getAssignes($task_id){

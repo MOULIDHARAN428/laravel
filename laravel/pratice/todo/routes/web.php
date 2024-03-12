@@ -27,9 +27,9 @@ Route::get('/task','TaskViewController@tasks');
 Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
 Route::get('/users_with_profile','TaskController@getUsersWithProfile');
 
+Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
 
-
-
+Route::get('/task/{task_id}','TaskViewController@specific_task');
 
 
 
