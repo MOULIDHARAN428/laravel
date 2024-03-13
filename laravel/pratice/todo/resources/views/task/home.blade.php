@@ -140,6 +140,10 @@ parent_id
             getUserTask(0);
         });
         resp.fail(function(resp){
+            if(resp.responseJSON.message==="Unauthenticated."){
+                var baseUrl = window.location.origin;
+                window.location.href = baseUrl + "/login";
+            }
             var response = JSON.parse(resp.responseText);
             var errors = response.validation_errors;
 

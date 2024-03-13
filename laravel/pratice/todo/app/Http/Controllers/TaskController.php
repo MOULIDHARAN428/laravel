@@ -73,8 +73,17 @@ class TaskController extends Controller
     }
 
     public function getTaskWithUsers($task_id){
+        // $validator = Validator::make(['task_id' => $task_id], [
+        //     'task_id' => 'integer|exists:tasks,id'
+        // ]);
+
         $validator = Validator::make(['task_id' => $task_id], [
-            'task_id' => 'integer|exists:tasks,id'
+            'task_id' => [
+                'required',
+                Rule::exists('tasks', 'id')->where(function ($query) {
+                    $query->whereNull('deleted_at');
+                }),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -119,7 +128,7 @@ class TaskController extends Controller
         $validator = Validator::make($request->all(),[
             'task_id' => 'required|exists:tasks,id',
             'user_id' => 'required|exists:users,id',
-            'role'=> 'required',
+            'role'=> 'required|max:100',
             'assigned_at' => 'required|date_format:Y-m-d H:i:s'
 
         ]);
@@ -250,16 +259,20 @@ class TaskController extends Controller
 
     public function deleteTask($task_id){
         
+        // $validator = Validator::make(['task_id' => $task_id], [
+        //     'task_id' => [
+        //         'required',
+        //         Rule::exists('tasks', 'id')->where(function ($query) {
+        //             $query->where('status', '=', 0)
+        //             ->whereNull('deleted_at');
+        //         }),
+        //     ],
+        // ]);
+        
         $validator = Validator::make(['task_id' => $task_id], [
-            'task_id' => [
-                'required',
-                Rule::exists('tasks', 'id')->where(function ($query) {
-                    $query->where('status', '=', 0)
-                    ->whereNull('deleted_at');
-                }),
-            ],
+            'task_id' => 'required|exists:tasks,id',
         ]);
-
+        
         if ($validator->fails()) {
             return $this->appendAndSendErrorMessage($validator->errors());  
         }
@@ -277,8 +290,7 @@ class TaskController extends Controller
             'task_map_id' => [
                 'required',
                 Rule::exists('task_mappings', 'id')->where(function ($query) {
-                    $query->where('status', '=', 0)
-                          ->whereNull('deleted_at');
+                    $query->whereNull('deleted_at');
                 }),
             ],
         ]);

@@ -47,21 +47,17 @@ Route::prefix('tasks')->group(function () {
 
         Route::post('/mapping/status/{task_map_id}','TaskController@editMapStatus'); 
 
+        Route::post('/mapping','TaskController@assignTask'); 
+
+        Route::post('/mapping/{task_map_id}','TaskController@editMapTask'); 
+
+        Route::post('/status/{task_id}','TaskController@editStatusAdmin');
+
+        // DELETE
+        Route::delete('/{task_id}','TaskController@deleteTask'); 
+
+        Route::delete('/mapping/{task_map_id}','TaskController@deleteMap');
         
-        Route::middleware('admin')->group(function () {
-
-            Route::post('/mapping','TaskController@assignTask'); 
-
-            Route::post('/mapping/{task_map_id}','TaskController@editMapTask'); 
-
-            Route::post('/status/{task_id}','TaskController@editStatusAdmin');
-
-            // DELETE
-            Route::delete('/{task_id}','TaskController@deleteTask'); 
-
-            Route::delete('/mapping/{task_map_id}','TaskController@deleteMap');
-        
-        });
 
         Route::post('/{task_id}','TaskController@editTask'); 
 

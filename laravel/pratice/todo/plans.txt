@@ -1,17 +1,13 @@
-task with users - 2nd day 
-users and their analytics - 3rd day
-self users analytics : users page - 3rd day
 
-create task
-
+create task // done
 edit task
-delete task
-assign user
-edit the details
+delete task // done
+complete task : user profile
 
-task page
-task title with avatar (assigned user)
-sub tasks
+assign user // done
+edit assignes
+delete assignes // done
+task compelted : user profile
 
 pagination
 
