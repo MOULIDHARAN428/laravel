@@ -159,9 +159,13 @@ class TaskController extends Controller
     }
 
     public function editTask(Request $request,$task_id){
-        $validator = Validator::make(['task_id' => $task_id], [
+        $validator = Validator::make(array_merge(['task_id' => $task_id], $request->all()), [
             'task_id' => 'required|integer|exists:tasks,id',
-            'due_time' => 'sometimes|date_format:Y-m-d H:i:s'
+            'title' => 'required|max:100',
+            'description' => 'required|max:100',
+            'due_time'=> 'sometimes|date_format:Y-m-d H:i:s',
+            'urgency' => 'required',
+            'parent_id'=> 'sometimes|integer|exists:tasks,id'
         ]);
         
         if ($validator->fails()) {
@@ -176,19 +180,21 @@ class TaskController extends Controller
     }
 
     public function editMapTask(Request $request,$task_map_id){
+        // Log::info("here");
         $request['task_map_id'] = $task_map_id;
         $validator = Validator::make($request->all(),[
-            'task_id' => 'nullable|exists:tasks,id',
             'user_id' => 'nullable|exists:users,id',
-            'time_completed' => 'nullable|date_format:Y-m-d H:i:s',
+            'role' => 'sometimes|max:100',
             'assigned_at' => 'nullable|date_format:Y-m-d H:i:s',
             'task_map_id' => ['required',
                                 Rule::exists('task_mappings', 'id')->where(function ($query) {
-                                    $query->where('status', '=', 0);
+                                    $query->whereNull('deleted_at');
                                 })],
+            
 
         ]);
         if ($validator->fails()) {
+            // Log::info($this->appendAndSendErrorMessage($validator->errors()));
             return $this->appendAndSendErrorMessage($validator->errors());  
         }
 

@@ -71,9 +71,7 @@ class RegisterController extends Controller
     
      protected function create(array $data)
     {
-        Log::info("register here");
         if($data['profile_picture'] != null){
-            Log::info("register here if");
             $filenamewithext = $data['profile_picture']->getClientOriginalName();
             $filename = pathinfo($filenamewithext, PATHINFO_FILENAME);
             $ext = pathinfo($filenamewithext, PATHINFO_EXTENSION);
@@ -82,10 +80,8 @@ class RegisterController extends Controller
 
         }
         else{
-            Log::info("register here else");
             $filenametostore = 'user.jpg';
         }
-        Log::info("register here after");
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],

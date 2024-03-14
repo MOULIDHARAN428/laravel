@@ -11,15 +11,7 @@ task compelted : user profile
 
 pagination
 
-Users - label
-show registered user
-
-Task -> 
-task details
-user - role - status
-profile - compelted, yet to do, over dued task
-
-
+filter : compelted, not_completed, over_due task
 
 #MODEL 
     #INTERACTION WITH DB

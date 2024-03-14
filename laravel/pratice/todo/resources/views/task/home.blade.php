@@ -92,11 +92,12 @@ parent_id
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
                 <button type="button" class="btn btn-primary" onclick="createTask()">Create</button>
             </div>
-        </div>$("input[name='urgency']:checked").val()
+        </div>
     </div>
 </div>
 
 <script>
+    let past_user ="default";
     function createTask(){
         document.getElementById("title_error").innerHTML = "";
         document.getElementById("description_error").innerHTML = "";
@@ -156,6 +157,18 @@ parent_id
     }
     function getUserTask(user_id){
         // console.log(user_id);
+        if(user_id==0){
+            if(past_user!=="default")
+                document.getElementsByClassName(past_user)[0].style.backgroundColor = "";
+            past_user = "default";
+        }
+        if(user_id!=0){
+            let class_name = "user_filter_"+user_id;
+            document.getElementsByClassName(class_name)[0].style.backgroundColor = "#6fb53a";
+            if(past_user!=="default")
+                document.getElementsByClassName(past_user)[0].style.backgroundColor = "";
+            past_user = class_name;
+        }
         let resp = $.ajax({
             type: 'GET',
             url: '/task_subtask_user'
@@ -293,7 +306,7 @@ parent_id
         resp.done(function(resp){
             let html = "<div class='user_registered_box'><h3>Users</h3>";
             for(let i = 0; i < resp.users.length; i++){
-                html += '<div class="border p-3 d-flex align-items-center justify-content-between" style="margin-top: 10px; cursor: pointer;" onclick="getUserTask(' + resp.users[i].id + ')">';
+                html += '<div class="border p-3 d-flex align-items-center justify-content-between user_filter_'+resp.users[i].id+'" style="margin-top: 10px; cursor: pointer;" onclick="getUserTask(' + resp.users[i].id + ')">';
                 html += '<div>' + resp.users[i].name + '</div>';
                 html += '<img src="{{ asset('storage/profile/') }}/' + resp.users[i].profile_picture +
                         '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';
