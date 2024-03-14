@@ -23,6 +23,7 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/task','TaskViewController@tasks');
+Route::get('/profile','TaskViewController@profile');
 
 Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
 Route::get('/users_with_profile','TaskController@getUsersWithProfile');
@@ -31,13 +32,14 @@ Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
 
 Route::get('/task/{task_id}','TaskViewController@specific_task');
 
+Route::get('/profile-analytics','TaskController@getUserAnalytics');
 
 // routes for getting the data
 Route::prefix('tasks')->group(function () {
     // GET
     Route::get('/','TaskController@getTasks'); 
 
-    Route::get('/{task_id}','TaskController@getSpecificTask'); 
+    // Route::get('/{task_id}','TaskController@getSpecificTask'); 
 
     Route::get('/mapping/{user_id}','TaskController@getUserTasks'); // need to test
 

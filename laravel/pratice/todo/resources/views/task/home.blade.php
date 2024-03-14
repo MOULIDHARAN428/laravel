@@ -67,24 +67,24 @@ parent_id
                         <div class="col-sm-10">
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" id="customRadioInline0" name="urgency" class="custom-control-input urgency-radio" value="0">
-                                <label class="custom-control-label" for="customRadioInline0">0</label>
+                                <label class="custom-control-label" for="customRadioInline0">Low</label>
                             </div>
                             
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" id="customRadioInline1" name="urgency" class="custom-control-input urgency-radio" value="1">
-                                <label class="custom-control-label" for="customRadioInline1">1</label>
+                                <label class="custom-control-label" for="customRadioInline1">High</label>
                             </div>
                             <div style="color: red" id="urgency_error"> </div>
                         </div>
                     </div>
                     
-                    <div class="form-group row">
+                    {{-- <div class="form-group row">
                         <label for="inputParentID" class="col-sm-2 col-form-label">Parent ID</label>
                         <div class="col-sm-10">
                           <input type="number" class="form-control" id="parent_id" placeholder="Tasks' Parent ID">
                           <div style="color: red" id="parent_id_error"> </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                 </form>
             </div>
@@ -103,9 +103,9 @@ parent_id
         document.getElementById("description_error").innerHTML = "";
         document.getElementById("due_time_error").innerHTML = "";
         document.getElementById("urgency_error").innerHTML = "";
-        document.getElementById("parent_id_error").innerHTML = "";
+        // document.getElementById("parent_id_error").innerHTML = "";
         
-        var parent_id = $('#parent_id').val();
+        // var parent_id = $('#parent_id').val();
         var due_time = $('#due_time').val();
 
         var data = {
@@ -124,10 +124,9 @@ parent_id
                 ('0' + selectedDate.getSeconds()).slice(-2);
             data.due_time = formattedDateTime;
         }
-        if (parent_id) {
-            data.parent_id = parent_id;
-        }
-
+        // if (parent_id) {
+        //     data.parent_id = parent_id;
+        // }
         let resp = $.ajax({
             type: 'POST',
             url: '/tasks',

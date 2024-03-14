@@ -42,6 +42,7 @@ Route::post('/logout', 'Auth\LoginController@logoutPassport')->middleware('auth:
 Route::post('/forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmailPassport');
 Route::post('/reset-password','Auth\ResetPasswordController@resetPasswordPassport'); 
 
+// Route::get('/profile/{user_id}','TaskController@getUserAnalytics');
 
 
 

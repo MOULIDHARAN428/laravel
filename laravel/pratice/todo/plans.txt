@@ -1,15 +1,14 @@
 
-create task // done
-edit task
-delete task // done
-complete task : user profile
+tasks
+1. users filter : could able to select many users : 15th
+3. create sub-task : 15th
+4. filter : by urgency, time
 
-assign user // done
-edit assignes
-delete assignes // done
-task compelted : user profile
+tasks/id
+1. design for sub tasks view : 16th
 
-pagination
+1. pagination : 16th or 17th
+
 
 filter : compelted, not_completed, over_due task
 
@@ -42,7 +41,7 @@ monthly_complete_task
 quaterly_complete_task
 
 complete ratio	  = CT/(CT+YTD+DT)
-incomplete ratio  = (YTD+DT)/(CT+YTD)
+incomplete ratio  = (YTD+DT)/(CT+YTD+DT)
 
 due_task : task_scheduling daily at 23:59
 weekly : assign 0 weekly sunday at 23:59

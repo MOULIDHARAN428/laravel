@@ -11,6 +11,11 @@ class UserTaskAnalytic extends Model
     public function users(){
         return $this->belongsTo(User::class,'id','user_id');
     }
+
+    public static function getUserAnalytics($user_id){
+        $user_analytics = self::where('user_id',$user_id)->get(['yet_to_do_task','due_task','completed_task']);
+        return $user_analytics;
+    }
     public function yetToDoTask($user_id){
         
         $yet_to_do = self::where('user_id',$user_id)

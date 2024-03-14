@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Task;
 use App\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TaskMapping extends Model
 {
@@ -71,17 +72,19 @@ class TaskMapping extends Model
 
     public static function editMapTask($map_data,$task_map_id){
         
-        if(isset($map_data['user_id'])){
+        if(isset($map_data['user_email'])){
             $old_user = self::where('id', $task_map_id)->pluck('user_id');
+            $new_user = User::where('email',$map_data['user_email'])->get(['id']);
+            $new_user_id = $new_user[0]['id'];
             self::where('id', $task_map_id)
-                    ->update(['user_id' => $map_data['user_id']]);
+                    ->update(['user_id' => $new_user_id]);
             
             //decrement
             UserTaskAnalytic::where('user_id', $old_user)
                         ->decrement('yet_to_do_task');
 
             //increment
-            UserTaskAnalytic::where('user_id', $map_data['user_id'])
+            UserTaskAnalytic::where('user_id', $new_user_id)
                         ->increment('yet_to_do_task');
 
             $task_map = self::find($task_map_id);
@@ -109,13 +112,6 @@ class TaskMapping extends Model
         // update
         if($status=='1' && $task_map['status']=='0'){
 
-            // UserTaskAnalytic::where('user_id', $userID)->update([
-            //     'yet_to_do_task' => DB::raw('yet_to_do_task - 1'),
-            //     'weekly_complete_task' => DB::raw('weekly_complete_task + 1'),
-            //     'monthly_complete_task' => DB::raw('monthly_complete_task + 1'),
-            //     'quaterly_complete_task' => DB::raw('quaterly_complete_task + 1'),
-            //     'completed_task' => DB::raw('completed_task + 1'),
-            // ]);
                     
             UserTaskAnalytic::where('user_id', $userID)
                     ->decrement('yet_to_do_task');
@@ -134,16 +130,46 @@ class TaskMapping extends Model
                     'time_completed' => date("Y-m-d H:i:s")
                 ]);
             
+            
+            // check for every assignes have completed task
+            $flag = true;
+            $task_id = $task_map->task_id;
+            $tasks = Self::where('task_id','task_id')->get(['status']);
+            foreach($tasks as $task){
+                if($task->status == "0"){
+                    $flag = false;
+                    break;
+                }
+            }
+
+            if($flag){
+                Task::where('id',$task_id)->update([
+                    'status' => $status,
+                    'time_completed' => date("Y-m-d H:i:s")
+                ]);
+
+                //check for parent_task
+                $parent_id = Task::where('id',$task_id)->value('parent_id');
+                if($parent_id){
+                    $sub_tasks = Task::where('parent_id',$parent_id)->get(['status']);
+                    foreach($sub_tasks as $sub_task){
+                        if($sub_task->status==0){
+                            $flag = false;
+                            break;
+                        }
+                    }
+                    if($flag){
+                        Task::where('id',$parent_id)->update([
+                            'status' => $status,
+                            'time_completed' => date("Y-m-d H:i:s")
+                        ]);
+                    }
+                }
+            }
+            
         }
         
         else if($status=='0' && $task_map['status']=='1'){
-
-            // UserTaskAnalytic::where('user_id', $userID)->update([
-            //     'yet_to_do_task' => DB::raw('yet_to_do_task + 1'),
-            //     'weekly_complete_task' => DB::raw('weekly_complete_task - 1'),
-            //     'monthly_complete_task' => DB::raw('monthly_complete_task - 1'),
-            //     'quaterly_complete_task' => DB::raw('quaterly_complete_task - 1'),
-            // ]);
             
             UserTaskAnalytic::where('user_id', $userID)
                 ->increment('yet_to_do_task');
@@ -159,6 +185,26 @@ class TaskMapping extends Model
                     'status' => $status,
                     'time_completed' => null
                 ]);
+            
+            // check for every assignes have completed task
+            $flag = true;
+            $task_id = $task_map->task_id;
+            
+            Task::where('id',$task_id)
+                ->update([
+                    'status' => $status,
+                    'time_completed' => null
+                ]);
+            
+            $parent_id = Task::where('id',$task_id)->value('parent_id');
+            if($parent_id){
+                Task::where('id',$parent_id)
+                ->update([
+                    'status' => $status,
+                    'time_completed' => null
+                ]);
+            }
+            
         }
 
         $taskWithAssignes = Task::where('id',$task_map['task_id'])

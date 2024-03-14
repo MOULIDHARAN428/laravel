@@ -1,6 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
+
+<nav aria-label="breadcrumb" style="padding-bottom:15px;">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/task">Tasks</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Task-Details</li>
+    </ol>
+</nav>
+  
+
 <div id="message">
     {{-- <div class="row justify-content-center">
         <div class="col-md-6">
@@ -147,24 +156,24 @@
                         <div class="col-sm-10">
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" id="customRadioInline0" name="urgency" class="custom-control-input urgency-radio" value="0">
-                                <label class="custom-control-label" for="customRadioInline0">0</label>
+                                <label class="custom-control-label" for="customRadioInline0">Low</label>
                             </div>
                             
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" id="customRadioInline1" name="urgency" class="custom-control-input urgency-radio" value="1">
-                                <label class="custom-control-label" for="customRadioInline1">1</label>
+                                <label class="custom-control-label" for="customRadioInline1">High</label>
                             </div>
                             <div style="color: red" id="urgency_error"> </div>
                         </div>
                     </div>
                     
-                    <div class="form-group row">
+                    {{-- <div class="form-group row">
                         <label for="inputParentID" class="col-sm-2 col-form-label">Parent ID</label>
                         <div class="col-sm-10">
                           <input type="number" class="form-control" id="parent_id" placeholder="Tasks' Parent ID">
                           <div style="color: red" id="parent_id_error"> </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                 </form>
             </div>
@@ -239,10 +248,10 @@
                 <form >
                     @csrf
                     <div class="form-group row">
-                        <label for="inputUserID" class="col-sm-2 col-form-label">User ID</label>
+                        <label for="inputUserID" class="col-sm-2 col-form-label">User Email</label>
                         <div class="col-sm-10">
-                          <input type="number" class="form-control" id="edit_user_id" placeholder="Tasks' User ID">
-                          <div style="color: red" id="edit_user_id_error"> </div>
+                          <input type="email" class="form-control" id="edit_user_email" placeholder="Tasks' User Email">
+                          <div style="color: red" id="error_edit_user_email_error"> </div>
                         </div>
                     </div>
                 </form>
@@ -321,17 +330,16 @@
         mapping_id = id;
     }
 
-    function modalEditAssignUserDefault(id,user_id){
-        document.getElementById("edit_user_id").value = user_id;
+    function modalEditAssignUserDefault(id,user_email){
         mapping_id = id;
     }
 
     //main functions
 
     function editChangeAssigne(){
-        document.getElementById("edit_user_id_error").innerHTML = "";
+        document.getElementById("error_edit_user_email_error").innerHTML = "";
         var data = {
-            user_id: $('#edit_user_id').val()
+            user_email: $('#edit_user_email').val()
         };
         let resp = $.ajax({
             type: 'POST',
@@ -341,11 +349,15 @@
             },
             data:data,
         });
-
         resp.done(function(resp){
             document.getElementById("edit-user-assignes-successfully").innerHTML = "<h5>Edited Successfully!</h5>";
+            setTimeout(function() {
+                document.getElementById("edit-user-assignes-successfully").innerHTML = "";
+            }, 5000);
+
             let task_id = {{ request()->route('task_id') }};
             getTask(task_id);
+
         });
 
         resp.fail(function(resp){
@@ -358,7 +370,7 @@
             // console.log(errors);
             for (var field in errors) {
                 var errorMessage = errors[field][0];
-                document.getElementById("edit_"+field+"_error").innerHTML = "<div>"+errorMessage+"</div>";
+                document.getElementById("error_edit_user_email_error").innerHTML = "<div>"+errorMessage+"</div>";
             }
 
         });
@@ -423,9 +435,9 @@
         document.getElementById("description_error").innerHTML = "";
         document.getElementById("due_time_error").innerHTML = "";
         document.getElementById("urgency_error").innerHTML = "";
-        document.getElementById("parent_id_error").innerHTML = "";
+        // document.getElementById("parent_id_error").innerHTML = "";
         
-        var parent_id = $('#parent_id').val();
+        // var parent_id = $('#parent_id').val();
 
         var due_time = $('#due_time').val();
 
@@ -446,9 +458,9 @@
                 ('0' + selectedDate.getSeconds()).slice(-2);
             data.due_time = formattedDateTime;
         }
-        if (parent_id) {
-            data.parent_id = parent_id;
-        }
+        // if (parent_id) {
+        //     data.parent_id = parent_id;
+        // }
 
         let resp = $.ajax({
             type: 'POST',
@@ -461,6 +473,9 @@
         resp.done(function(resp){
             document.getElementById("edited-successfully").innerHTML = "<h5>Edited Successfully!</h5>";
             getTask(task_data.id);
+            setTimeout(function() {
+                document.getElementById("edited-successfully").innerHTML = "";
+            }, 5000);
         });
         resp.fail(function(resp){
             if(resp.responseJSON.message==="Unauthenticated."){
@@ -511,6 +526,9 @@
         });
         resp.done(function(resp){
             document.getElementById("created-successfully").innerHTML = "<h5>Created Successfully!</h5>";
+            setTimeout(function() {
+                document.getElementById("created-successfully").innerHTML = "";
+            }, 5000);
             let task_id = {{ request()->route('task_id') }};
             getTask(task_id);
         });
@@ -561,8 +579,8 @@
                                     <p><strong>Urgency:</strong>
                                         ${
                                             $task.urgency == 1
-                                            ? '<span class="badge badge-danger">Urgent</span>'
-                                            : '<span class="badge badge-success">Not Urgent</span>'
+                                            ? '<span class="badge badge-danger">High</span>'
+                                            : '<span class="badge badge-success">Low</span>'
                                         }  
                                     </p>
                                     <p><strong>Status:</strong>
@@ -594,13 +612,13 @@
                                 <p><strong>S.NO</strong></p>
                             </div>
                             <div class="col-md-1">
-                                <p><strong>Profile</strong></p>
+                                <p><strong>User</strong></p>
                             </div>
                             <div class="col-md-2">
                                 <p><strong>Name</strong></p>
                             </div>
                             <div class="col-md-4">
-                                <p><strong>Role</strong></p>
+                                <p><strong>User Description</strong></p>
                             </div>
                             <div class="col-md-2">
                                 <p><strong>Status</strong></p>

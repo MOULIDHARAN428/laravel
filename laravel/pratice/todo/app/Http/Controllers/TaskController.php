@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Traits\sendMailTrait;
+use App\UserTaskAnalytic;
 use Illuminate\Support\Facades\Log;
 
 class TaskController extends Controller
@@ -104,6 +105,22 @@ class TaskController extends Controller
         ]);
     }
 
+    public function getUserAnalytics(){
+        $user_id = auth()->user()->id;
+        $validator = Validator::make(["user_id"=>$user_id],[
+            'user_id'=>'required|exists:users,id',
+        ]);
+        if ($validator->fails()) {
+            return $this->appendAndSendErrorMessage($validator->errors());
+        }
+
+        $user_analytics = UserTaskAnalytic::getUserAnalytics($user_id);
+        return response()->json([
+            'ok' => true,
+            'analytics' => $user_analytics
+        ], 200);
+    }
+
     public function createTask(Request $request){
 
         $validator = Validator::make($request->all(),[
@@ -180,10 +197,9 @@ class TaskController extends Controller
     }
 
     public function editMapTask(Request $request,$task_map_id){
-        // Log::info("here");
         $request['task_map_id'] = $task_map_id;
         $validator = Validator::make($request->all(),[
-            'user_id' => 'nullable|exists:users,id',
+            'user_email' => 'nullable|exists:users,email',
             'role' => 'sometimes|max:100',
             'assigned_at' => 'nullable|date_format:Y-m-d H:i:s',
             'task_map_id' => ['required',
@@ -194,7 +210,6 @@ class TaskController extends Controller
 
         ]);
         if ($validator->fails()) {
-            // Log::info($this->appendAndSendErrorMessage($validator->errors()));
             return $this->appendAndSendErrorMessage($validator->errors());  
         }
 
