@@ -208,6 +208,7 @@
                     document.getElementById("message").innerHTML = "";
                 }, 5000);
                 getUserDetails(user_id_main);
+                getUserAnalytical();
             });
             resp.fail(function(resp){
                 console.log(resp);

@@ -16,9 +16,9 @@
     </div>
 </div>
 
-{{-- Modal --}}
+{{-- Task Modal --}}
 
-{{--
+{{--    
 title
 description
 urgency
@@ -64,7 +64,7 @@ parent_id
 
                     <div class="form-group row">
                         <label for="inputUrgency" class="col-sm-2 col-form-label">Urgency</label>
-                        <div class="col-sm-10">
+                        <div class="col-sm-10" style="padding-top: 10px">
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" id="customRadioInline0" name="urgency" class="custom-control-input urgency-radio" value="0">
                                 <label class="custom-control-label" for="customRadioInline0">Low</label>
@@ -96,8 +96,135 @@ parent_id
     </div>
 </div>
 
+{{-- Sub Task Modal --}}
+
+{{--    
+title
+description
+urgency
+parent_id
+--}}
+
+<div class="modal fade bd-example-modal-lg" id="createSubTaskModal" tabindex="-1" role="dialog" aria-labelledby="createSubTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSubTaskModalLabel">Create Sub Task</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="sub-task-created-successfully" style="color : green; text-align : center;"></div>
+                <form >
+                    @csrf
+                    <div class="form-group row">
+                      <label for="inputTitle" class="col-sm-2 col-form-label">Title</label>
+                      <div class="col-sm-10">
+                        <input type="text" class="form-control" id="subtask_title" placeholder="Task Title" required>
+                        <div style="color: red" id="subtask_title_error"> </div>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="inputDescription" class="col-sm-2 col-form-label">Description</label>
+                        <div class="col-sm-10">
+                          <textarea class="form-control" id="subtask_description" placeholder="Task Description" rows="2" required></textarea>
+                          <div style="color: red" id="subtask_description_error"> </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="inputDueTime" class="col-sm-2 col-form-label">Due Time</label>
+                        <div class="col-sm-10">
+                          <input type="datetime-local" class="form-control" id="subtask_due_time" placeholder="Task Due Time" required></input>
+                          <div style="color: red" id="subtask_due_time_error"> </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="inputSubtaskUrgency" class="col-sm-2 col-form-label"> Urgency</label>
+                        <div class="col-sm-10" style="padding-top: 10px">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="subtaskUrgencyRadioInline0" name="subtask_urgency" class="custom-control-input urgency-radio" value="0">
+                                <label class="custom-control-label" for="subtaskUrgencyRadioInline0">Low</label>
+                            </div>
+                            
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="subtaskUrgencyRadioInline1" name="subtask_urgency" class="custom-control-input urgency-radio" value="1">
+                                <label class="custom-control-label" for="subtaskUrgencyRadioInline1">High</label>
+                            </div>
+                            <div style="color: red" id="subtask_urgency_error"> </div>
+                        </div>
+                    </div>   
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
+                <button type="button" class="btn btn-primary" onclick="createSubTask()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let past_user ="default";
+    let parentID = "default";
+    function assignParentId(task_id){
+        parentID = task_id;
+    }
+    function createSubTask(){
+        document.getElementById("subtask_title_error").innerHTML = "";
+        document.getElementById("subtask_description_error").innerHTML = "";
+        document.getElementById("subtask_due_time_error").innerHTML = "";
+        document.getElementById("subtask_urgency_error").innerHTML = "";
+        var due_time = $('#subtask_due_time').val();
+        var data = {
+            title: $('#subtask_title').val(),
+            description: $('#subtask_description').val(),
+            urgency: $("input[name='subtask_urgency']:checked").val(),
+            parent_id: parentID
+        };
+        if(due_time){
+            var selectedDate = new Date(due_time);
+            var formattedDateTime =
+                selectedDate.getFullYear() + '-' +
+                ('0' + (selectedDate.getMonth() + 1)).slice(-2) + '-' +
+                ('0' + selectedDate.getDate()).slice(-2) + ' ' +
+                ('0' + selectedDate.getHours()).slice(-2) + ':' +
+                ('0' + selectedDate.getMinutes()).slice(-2) + ':' +
+                ('0' + selectedDate.getSeconds()).slice(-2);
+            data.due_time = formattedDateTime;
+        }
+        let resp = $.ajax({
+            type: 'POST',
+            url: '/tasks',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data:data,
+        });
+        resp.done(function(resp){
+            document.getElementById("sub-task-created-successfully").innerHTML = "<h5>Created Sub-Task Successfully!</h5>";
+            getUserTask(0);
+        });
+        resp.fail(function(resp){
+            if(resp.responseJSON.message==="Unauthenticated."){
+                var baseUrl = window.location.origin;
+                window.location.href = baseUrl + "/login";
+            }
+            var response = JSON.parse(resp.responseText);
+            var errors = response.validation_errors;
+
+            for (var field in errors) {
+                var errorMessage = errors[field][0];
+                document.getElementById("subtask_"+field+"_error").innerHTML = "<div>"+errorMessage+"</div>";
+            }
+
+        });
+
+    }
     function createTask(){
         document.getElementById("title_error").innerHTML = "";
         document.getElementById("description_error").innerHTML = "";
@@ -136,7 +263,7 @@ parent_id
             data:data,
         });
         resp.done(function(resp){
-            document.getElementById("created-successfully").innerHTML = "<h5>Created Successfully!</h5>";
+            document.getElementById("created-successfully").innerHTML = "<h5>Created Task Successfully!</h5>";
             getUserTask(0);
         });
         resp.fail(function(resp){
@@ -207,10 +334,10 @@ parent_id
                 
                 html += `
                 <div class="card-separator" style="padding-top:40px;"></div>
-                <div class='card' ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"`+`style="cursor: pointer;"` : ''}>
+                <div class='card'>
                     <div class="card-header">
                         <div class = "row">
-                            <div class = "col-12 col-sm-8">
+                            <div class = "col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"`+`style="cursor: pointer;"` : ''}>
                                 <p class="task-title"> ${serial_no}. ${$task.title}
                                 ${
                                     $task.status == 0
@@ -230,7 +357,10 @@ parent_id
                     }
                 }
                 
-                html += `           </div>
+                html += `<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#createSubTaskModal" onclick="assignParentId(${$task.id})">
+                            <i class="fa fa-angle-double-left" style="margin-left: 5px;"></i>
+                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>`;

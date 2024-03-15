@@ -179,7 +179,9 @@ class TaskMapping extends Model
                 ->decrement('monthly_complete_task');
             UserTaskAnalytic::where('user_id', $userID)
                 ->decrement('quaterly_complete_task');
-            
+            UserTaskAnalytic::where('user_id', $userID)
+                ->decrement('completed_task');
+
             self::where('id',$task_map_id)
                 ->update([
                     'status' => $status,

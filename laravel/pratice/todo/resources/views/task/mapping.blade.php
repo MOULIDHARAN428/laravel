@@ -81,9 +81,9 @@
                     </div>
                     
                     <div class="form-group row">
-                        <label for="inputRole" class="col-sm-2 col-form-label">Role</label>
+                        <label for="inputRole" class="col-sm-2 col-form-label">Description</label>
                         <div class="col-sm-10">
-                          <textarea class="form-control" id="role" placeholder="Task Role" rows="2" required></textarea>
+                          <textarea class="form-control" id="role" placeholder="User's Task Description" rows="2" required></textarea>
                           <div style="color: red" id="role_error"> </div>
                         </div>
                     </div>

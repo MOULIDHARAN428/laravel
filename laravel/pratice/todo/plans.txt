@@ -1,14 +1,12 @@
 
 tasks
-1. users filter : could able to select many users : 15th
-3. create sub-task : 15th
-4. filter : by urgency, time
+1. users filter : could able to select many users : 15th : can be done by the mean of the arrays
+4. filter : by urgency, time : 18th
 
 tasks/id
-1. design for sub tasks view : 16th
+1. design for sub tasks view : 15th
 
-1. pagination : 16th or 17th
-
+1. pagination : 18th
 
 filter : compelted, not_completed, over_due task
 
