@@ -73,10 +73,10 @@
                     @csrf
                     
                     <div class="form-group row">
-                        <label for="inputUserID" class="col-sm-2 col-form-label">User ID</label>
+                        <label for="inputUserEmailID" class="col-sm-2 col-form-label">User mail ID</label>
                         <div class="col-sm-10">
-                          <input type="number" class="form-control" id="user_id" placeholder="Tasks' User ID">
-                          <div style="color: red" id="user_id_error"> </div>
+                          <input type="email" class="form-control" id="user_email" placeholder="User mail ID">
+                          <div style="color: red" id="user_email_error"> </div>
                         </div>
                     </div>
                     
@@ -494,7 +494,7 @@
     }
 
     function assignTask(){
-        document.getElementById("user_id_error").innerHTML = "";
+        document.getElementById("user_email_error").innerHTML = "";
         document.getElementById("role_error").innerHTML = "";
         document.getElementById("assigned_at_error").innerHTML = "";
         
@@ -502,7 +502,7 @@
 
         var data = {
             task_id: {{ request()->route('task_id') }},
-            user_id: $('#user_id').val(),
+            user_email: $('#user_email').val(),
             role: $('#role').val(),
         };
         if(assigned_at){

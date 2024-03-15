@@ -1,12 +1,9 @@
 
 tasks
-1. users filter : could able to select many users : 15th : can be done by the mean of the arrays
 4. filter : by urgency, time : 18th
 
-tasks/id
-1. design for sub tasks view : 15th
-
 1. pagination : 18th
+2. add user analytical row when user created a profile
 
 filter : compelted, not_completed, over_due task
 
