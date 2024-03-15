@@ -169,8 +169,22 @@ parent_id
 </div>
 
 <script>
-    let past_user ="default";
+    let users = [];
+    let current_users = [];
     let parentID = "default";
+    function modifyTheUserAndCurrentUserArray(user_id){
+        if (current_users.indexOf(user_id) !== -1) {
+            const index = current_users.indexOf(user_id);
+            current_users.splice(index, 1);
+        } else {
+            current_users.push(user_id);
+        }
+        getUserTask();
+    }
+    function removeAllUserFromCurrentUser(){
+        current_users.length = 0;
+        getUserTask();
+    }
     function assignParentId(task_id){
         parentID = task_id;
     }
@@ -207,7 +221,7 @@ parent_id
         });
         resp.done(function(resp){
             document.getElementById("sub-task-created-successfully").innerHTML = "<h5>Created Sub-Task Successfully!</h5>";
-            getUserTask(0);
+            getUserTask();
         });
         resp.fail(function(resp){
             if(resp.responseJSON.message==="Unauthenticated."){
@@ -264,7 +278,7 @@ parent_id
         });
         resp.done(function(resp){
             document.getElementById("created-successfully").innerHTML = "<h5>Created Task Successfully!</h5>";
-            getUserTask(0);
+            getUserTask();
         });
         resp.fail(function(resp){
             if(resp.responseJSON.message==="Unauthenticated."){
@@ -281,20 +295,15 @@ parent_id
 
         });
     }
-    function getUserTask(user_id){
-        // console.log(user_id);
-        if(user_id==0){
-            if(past_user!=="default")
-                document.getElementsByClassName(past_user)[0].style.backgroundColor = "";
-            past_user = "default";
-        }
-        if(user_id!=0){
-            let class_name = "user_filter_"+user_id;
-            document.getElementsByClassName(class_name)[0].style.backgroundColor = "#6fb53a";
-            if(past_user!=="default")
-                document.getElementsByClassName(past_user)[0].style.backgroundColor = "";
-            past_user = class_name;
-        }
+    function getUserTask(){
+        users.forEach(user => {
+            if (current_users.indexOf(user)!==-1) {
+                document.getElementsByClassName("user_filter_"+user)[0].style.backgroundColor = "#6fb53a";
+            } else {
+                document.getElementsByClassName("user_filter_"+user)[0].style.backgroundColor = "";
+            }
+        });
+
         let resp = $.ajax({
             type: 'GET',
             url: '/task_subtask_user'
@@ -304,32 +313,31 @@ parent_id
             let html = "";
             for(let index=0;index<resp.task.length;index++){
                 $task = resp.task[index];
-
-                if(user_id!==0){
-                    let flag = false;
-                    if($task.sub_tasks.length!==0){
-                        for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
-                            $sub_task = $task.sub_tasks[sub_task_id];
-                            for (let assignesID in $sub_task.assignes) {
-                                if($sub_task.assignes[assignesID].user_id===user_id){
-                                    flag = true;
-                                    break;
-                                }
-                            }
-                            if(flag) break;
-                        }
-                    }
-                    
-                    else{
-                        for (let assignesID in $task.assignes) {
-                            if($task.assignes[assignesID].user_id===user_id){
+                
+                let flag = false;
+                if($task.sub_tasks.length!==0){
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        for (let assignesID in $sub_task.assignes) {
+                            if(current_users.indexOf($sub_task.assignes[assignesID].user_id)!==-1){
                                 flag = true;
                                 break;
                             }
                         }
+                        if(flag) break;
                     }
-                    if(!flag) continue;
                 }
+                
+                else{
+                    for (let assignesID in $task.assignes) {
+                        if(current_users.indexOf($task.assignes[assignesID].user_id)!==-1){
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if(!flag && current_users.length>0) continue;
+                
 
                 
                 html += `
@@ -337,7 +345,7 @@ parent_id
                 <div class='card'>
                     <div class="card-header">
                         <div class = "row">
-                            <div class = "col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"`+`style="cursor: pointer;"` : ''}>
+                            <div style="cursor: pointer;" class="col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"` : `onclick="window.location.href='/parent-task/${$task.id}'"`}>
                                 <p class="task-title"> ${serial_no}. ${$task.title}
                                 ${
                                     $task.status == 0
@@ -435,14 +443,15 @@ parent_id
         resp.done(function(resp){
             let html = "<div class='user_registered_box'><h3>Users</h3>";
             for(let i = 0; i < resp.users.length; i++){
-                html += '<div class="border p-3 d-flex align-items-center justify-content-between user_filter_'+resp.users[i].id+'" style="margin-top: 10px; cursor: pointer;" onclick="getUserTask(' + resp.users[i].id + ')">';
+                users.push(resp.users[i].id);
+                html += '<div class="border p-3 d-flex align-items-center justify-content-between user_filter_'+resp.users[i].id+'" style="margin-top: 10px; cursor: pointer;" onclick="modifyTheUserAndCurrentUserArray(' + resp.users[i].id + ')">';
                 html += '<div>' + resp.users[i].name + '</div>';
                 html += '<img src="{{ asset('storage/profile/') }}/' + resp.users[i].profile_picture +
                         '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';
                 html += '</div>';
             }
 
-            html += '<div class="border p-3 d-flex align-items-center justify-content-between" style="margin-top: 10px; cursor: pointer;" onclick="getUserTask(0)"> Reset <i class="fa fa-refresh fa-spin" style="margin-right:10px;"></i> </div>';
+            html += '<div class="border p-3 d-flex align-items-center justify-content-between" style="margin-top: 10px; cursor: pointer;" onclick="removeAllUserFromCurrentUser()"> Reset <i class="fa fa-refresh fa-spin" style="margin-right:10px;"></i> </div>';
 
             html+="</div>";
             document.getElementById("user").innerHTML = html;
@@ -454,7 +463,7 @@ parent_id
     }
 
     $(document).ready(function() {
-        getUserTask(0);
+        getUserTask();
         getUsersWithProfile();
     });
 
