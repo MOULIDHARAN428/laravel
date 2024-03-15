@@ -82,12 +82,20 @@ class RegisterController extends Controller
         else{
             $filenametostore = 'user.jpg';
         }
-        return User::create([
+
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'profile_picture' => $filenametostore,
         ]);
+
+        // creating the user analytics for the user
+        $task_analytics = new UserTaskAnalytic();
+        $task_analytics->user_id = $user->id;
+        $task_analytics->save();
+
+        return $user;
     }
 
 
