@@ -74,9 +74,6 @@ class TaskController extends Controller
     }
 
     public function getTaskWithUsers($task_id){
-        // $validator = Validator::make(['task_id' => $task_id], [
-        //     'task_id' => 'integer|exists:tasks,id'
-        // ]);
 
         $validator = Validator::make(['task_id' => $task_id], [
             'task_id' => [
@@ -90,7 +87,27 @@ class TaskController extends Controller
         if ($validator->fails()) {
             return $this->appendAndSendErrorMessage($validator->errors()); 
         }
+
         $task = Task::getTaskWithUsers($task_id);
+        return response()->json([
+            'ok' => true,
+            'task' => $task
+        ], 200);    
+    }
+
+    public function getTaskWithSubtask($task_id){
+        $validator = Validator::make(['task_id' => $task_id], [
+            'task_id' => [
+                'required',
+                Rule::exists('tasks', 'id')->where(function ($query) {
+                    $query->whereNull('deleted_at');
+                }),
+            ],
+        ]);
+        if ($validator->fails()) {
+            return $this->appendAndSendErrorMessage($validator->errors()); 
+        }
+        $task = Task::getTaskWithSubtask($task_id);
         return response()->json([
             'ok' => true,
             'task' => $task
@@ -144,7 +161,7 @@ class TaskController extends Controller
     public function assignTask(Request $request){
         $validator = Validator::make($request->all(),[
             'task_id' => 'required|exists:tasks,id',
-            'user_id' => 'required|exists:users,id',
+            'user_email' => 'required|exists:users,email',
             'role'=> 'required|max:100',
             'assigned_at' => 'required|date_format:Y-m-d H:i:s'
 

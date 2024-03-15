@@ -22,18 +22,25 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/task','TaskViewController@tasks');
-Route::get('/profile','TaskViewController@profile');
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
-Route::get('/users_with_profile','TaskController@getUsersWithProfile');
+    Route::get('/task','TaskViewController@tasks');
+    Route::get('/profile','TaskViewController@profile');
+    
+    Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
+    Route::get('/users_with_profile','TaskController@getUsersWithProfile');
+    
+    Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
+    
+    Route::get('/task/{task_id}','TaskViewController@specificTask');
+    
+    Route::get('/parent-task/{task_id}','TaskViewController@specificParentTask');
+    
+    Route::get('/profile-analytics','TaskController@getUserAnalytics');
+    
+    Route::get('/task_with_subtask_with_user/{task_id}','TaskController@getTaskWithSubtask');
 
-Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
-
-Route::get('/task/{task_id}','TaskViewController@specific_task');
-
-Route::get('/profile-analytics','TaskController@getUserAnalytics');
-
+});
 // routes for getting the data
 Route::prefix('tasks')->group(function () {
     // GET

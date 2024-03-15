@@ -72,7 +72,6 @@ class Task extends Model
 
     public static function getTasks(){
         $tasks = self::query()->with('taskMappings')->get();
-        // dd($tasks);
         return $tasks;
     }
     
@@ -80,6 +79,16 @@ class Task extends Model
         $task = self::where('id', $task_id)
                 ->with('taskMappings')
                 ->first();
+        return $task;
+    }
+
+    public static function getTaskWithSubtask($task_id){
+        $task['title'] = Self::where('id',$task_id)->value('title');
+        $task_id = Self::where('parent_id',$task_id)->get(['id']);
+        $task['sub_task'] = [];
+        foreach($task_id as $id){
+            $task['sub_task'][] = Self::getTaskWithUsers($id->id);
+        }
         return $task;
     }
 

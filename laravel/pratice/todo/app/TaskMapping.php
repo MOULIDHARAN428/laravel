@@ -47,9 +47,12 @@ class TaskMapping extends Model
 
     public static function createTaskMap($map_data){
         //user_id, task_id, id
+
+        $user_id = User::where('email',$map_data['user_email'])->value('id');
+
         $task_map = new TaskMapping();
         $task_map->task_id = $map_data['task_id'];
-        $task_map->user_id = $map_data['user_id'];
+        $task_map->user_id = $user_id;
         $task_map->role = $map_data['role'];
         $task_map->assigned_at = $map_data['assigned_at'];
 
