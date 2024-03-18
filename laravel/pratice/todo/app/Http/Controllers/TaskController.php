@@ -138,6 +138,29 @@ class TaskController extends Controller
         ], 200);
     }
 
+    public function sortByTime(Request $request){
+        $validator = Validator::make($request->all(), [
+            'start_time' => 'required|date_format:Y-m-d H:i:s',
+            'end_time' => 'required|date_format:Y-m-d H:i:s|after:start_time',
+        ], [
+            'end_time.after' => 'The end time must be after the start time.',
+        ]);
+        if ($validator->fails()) {
+            $errorMessages = [];
+            foreach ($validator->errors()->messages() as $fieldName => $messages) {
+                $errorMessages[$fieldName] = [$messages[0]];
+            }
+        
+            return $this->appendAndSendErrorMessage($errorMessages);
+        }
+        
+        
+        $task = Task::sortByTime($request);
+        return response()->json([
+            'ok' => true,
+            'task' => $task
+        ], 200);
+    }
     public function createTask(Request $request){
 
         $validator = Validator::make($request->all(),[

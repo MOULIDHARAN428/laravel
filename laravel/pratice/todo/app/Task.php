@@ -57,6 +57,40 @@ class Task extends Model
         return $task_with_subtask;
     }
 
+    public static function sortByTime($data){
+        $tasks = Self::whereBetween('created_at', [$data['start_time'], $data['end_time']])
+                ->get();
+
+        $task_with_subtask = [];
+
+        foreach ($tasks as $t) {
+            $task =  $t->toArray();
+            $formate_time = new Task();
+            
+            //formate time
+            if(isset($task['time_completed'])){
+                $task['time_completed'] = $formate_time->formatTime($task['time_completed']);
+            }if(isset($task['due_time'])){
+                $task['due_time'] = $formate_time->formatTime($task['due_time']);
+            }
+
+            //putting subtasks into task
+            if (!isset($task_with_subtask[$task['parent_id']])) {
+                $task['assignes'] = TaskMapping::getAssignes($task['id']);
+                $task_with_subtask[$task['id']] = $task;
+                $task_with_subtask[$task['id']]['sub_tasks'] = [];
+            } else {
+                $task['assignes'] = TaskMapping::getAssignes($task['id']);
+                $task_with_subtask[$task['parent_id']]['sub_tasks'][] = $task;
+            }
+        }
+
+        // to have the latest task first
+        $task_with_subtask = array_reverse($task_with_subtask);
+
+        return $task_with_subtask;
+    }
+
     public static function getTaskWithUsers($task_id){
         $task = self::where('id',$task_id)->first();
         $formate_time = new Task();

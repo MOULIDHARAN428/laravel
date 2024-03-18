@@ -21,7 +21,9 @@
                 </ul>
             </div>
             <div style="padding-left:20px;">
-                <button type="button" class="btn btn-lg btn-secondary">Sort</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-bs-toggle="modal" data-bs-target="#sortModel">
+                    Sort
+                </button>
             </div>
             <div class="ml-auto">
                 <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
@@ -187,6 +189,40 @@ parent_id
     </div>
 </div>
 
+{{-- Sort By Date --}}
+<div class="modal fade" id="sortModel" tabindex="-1" aria-labelledby="sortModelLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sortModelLabel">Sort by Time</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="text-center" id="success_for_sort" style="color: green;padding-bottom:10px;"></div>
+            <div class="mb-3 row">
+                <label for="inputfrom" class="col-sm-2 col-form-label">From</label>
+                <div class="col-sm-10">
+                    <input type="datetime-local" class="form-control" id="start_time" required>
+                    <div id="start_time_error" style="color: red"></div>
+                </div>
+            </div>
+            <div class="mb-3 row">
+                <label for="inputfrom" class="col-sm-2 col-form-label">To</label>
+                <div class="col-sm-10">
+                    <input type="datetime-local" class="form-control" id="end_time" required>
+                    <div id="end_time_error" style="color: red"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onClick="sortByTime()">Sort</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+
 <script>
     let users = [];
     let current_users = [];
@@ -206,7 +242,178 @@ parent_id
             filterCompletedTask(0);
         }
     }
-    
+    function sortByTime(){
+        document.getElementById("start_time_error").innerHTML = "";
+        document.getElementById("end_time_error").innerHTML = "";
+        var start_time = $('#start_time').val();
+        var end_time = $('#end_time').val();
+        if(start_time){
+            var selectedDate = new Date(start_time);
+            start_time =
+                selectedDate.getFullYear() + '-' +
+                ('0' + (selectedDate.getMonth() + 1)).slice(-2) + '-' +
+                ('0' + selectedDate.getDate()).slice(-2) + ' ' +
+                ('0' + selectedDate.getHours()).slice(-2) + ':' +
+                ('0' + selectedDate.getMinutes()).slice(-2) + ':' +
+                ('0' + selectedDate.getSeconds()).slice(-2);
+        }
+        if(end_time){
+            var selectedDate = new Date(end_time);
+            end_time =
+                selectedDate.getFullYear() + '-' +
+                ('0' + (selectedDate.getMonth() + 1)).slice(-2) + '-' +
+                ('0' + selectedDate.getDate()).slice(-2) + ' ' +
+                ('0' + selectedDate.getHours()).slice(-2) + ':' +
+                ('0' + selectedDate.getMinutes()).slice(-2) + ':' +
+                ('0' + selectedDate.getSeconds()).slice(-2);
+        }
+        var data = {
+            start_time: start_time,
+            end_time: end_time
+        };
+        let resp = $.ajax({
+            type: 'POST',
+            url: '/sort_by_time',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: data
+        });
+        resp.done(function(resp){
+            let serial_no = 1; 
+            let html = "";
+            for(let index=0;index<resp.task.length;index++){
+                $task = resp.task[index];
+                
+                let flag = false;
+                if($task.sub_tasks.length!==0){
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        for (let assignesID in $sub_task.assignes) {
+                            if(current_users.indexOf($sub_task.assignes[assignesID].user_id)!==-1){
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if(flag) break;
+                    }
+                }
+                
+                else{
+                    for (let assignesID in $task.assignes) {
+                        if(current_users.indexOf($task.assignes[assignesID].user_id)!==-1){
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if(!flag && current_users.length>0) continue;
+                
+
+                
+                html += `
+                <div class="card-separator" style="padding-top:40px;"></div>
+                <div class='card'>
+                    <div class="card-header">
+                        <div class = "row">
+                            <div style="cursor: pointer;" class="col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"` : `onclick="window.location.href='/parent-task/${$task.id}'"`}>
+                                <p class="task-title"> ${serial_no}. ${$task.title}
+                                ${
+                                    $task.status == 0
+                                        ? '<span class="badge badge-danger">Not Completed</span>'
+                                        : '<span class="badge badge-success">Completed</span>'
+                                }
+                                </p>
+                            </div>
+                            <div class = "col-12 col-sm-4">
+                                <div class="d-flex flex-row-reverse">
+                `;
+
+
+                if ($task.assignes !== undefined && $task.sub_tasks.length===0) {
+                    for (let assignesID in $task.assignes) {
+                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $task.assignes[assignesID].profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';
+                    }
+                }
+                
+                html += `<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#createSubTaskModal" onclick="assignParentId(${$task.id})">
+                            <i class="fa fa-angle-double-left" style="margin-left: 5px;"></i>
+                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+            
+
+                // subtask
+                if($task.sub_tasks.length>0){
+                    html += `<div class="card-body"><div class="card-separator" style="padding-top:15px;"></div>
+                                <div class='card'>
+                                    <div class="card-header">`;
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        html += `
+                                        <div class = "row" style="cursor: pointer;" onclick="window.location.href='/task/${$sub_task.id}'">
+                                            <div class = "col-12 col-sm-8">
+                                                <p class="task-title"> ${sub_task_id+1}. ${$sub_task.title}
+                                                    ${
+                                                        $sub_task.status == 0
+                                                            ? '<span class="badge badge-danger">Not Completed</span>'
+                                                            : '<span class="badge badge-success">Completed</span>'
+                                                    }    
+                                                </p>
+                                            </div>
+                                            <div class = "col-12 col-sm-4">
+                                                <div class="d-flex flex-row-reverse">
+                                `;
+
+                            if($sub_task.assignes!==undefined){
+                                let haveAssignes = false;
+                                for(let assignesID in $sub_task.assignes){
+                                    haveAssignes = true;
+                                    break;
+                                }
+                                if(haveAssignes){
+                                    for(let assignesID in $sub_task.assignes){
+                                        $assigne = $sub_task.assignes[assignesID];
+                                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $assigne.profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';   
+                                    }
+                                }
+                            }
+
+                            html += `           </div>
+                                            </div>
+                                        </div>
+                                        `;
+            
+                    }
+                    html+=` </div>
+                        </div>
+                    </div>`;
+                        
+                }
+                html+='</div>';
+                serial_no++;
+            }
+            if(html==="") 
+                html = `<div class="card-separator" style="padding-top:40px;"></div>
+                        <h3>No tasks available...!</h3>`;
+            document.getElementById("task").innerHTML = html;
+            document.getElementById("success_for_sort").innerHTML = "Sorted Successfully";
+        })
+        resp.fail(function(resp){
+            if(resp.responseJSON.message==="Unauthenticated."){
+                var baseUrl = window.location.origin;
+                window.location.href = baseUrl + "/login";
+            }
+            var response = JSON.parse(resp.responseText);
+            var errors = response.validation_errors;
+            for (var field in errors) {
+                var errorMessage = errors[field][0];
+                document.getElementById(field+"_error").innerHTML = "<div>"+errorMessage+"</div>";
+            }
+        })
+    }
     function filterUrgentTask(urgent){
         let resp = $.ajax({
             type: 'GET',

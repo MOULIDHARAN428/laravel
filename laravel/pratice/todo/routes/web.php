@@ -25,9 +25,11 @@ Auth::routes();
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/task','TaskViewController@tasks');
+
     Route::get('/profile','TaskViewController@profile');
     
     Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
+    
     Route::get('/users_with_profile','TaskController@getUsersWithProfile');
     
     Route::get('/task_with_user/{task_id}','TaskController@getTaskWithUsers');
@@ -39,6 +41,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile-analytics','TaskController@getUserAnalytics');
     
     Route::get('/task_with_subtask_with_user/{task_id}','TaskController@getTaskWithSubtask');
+
+    Route::post('/sort_by_time','TaskController@sortByTime');
 
 });
 // routes for getting the data
