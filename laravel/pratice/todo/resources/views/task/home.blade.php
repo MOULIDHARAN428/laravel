@@ -6,14 +6,33 @@
     <div class="col-12 col-sm-2 user_registered" id="user">
 
     </div>
+    
     <div class="col-12 col-sm-8">
-        <div class="d-flex justify-content-end align-items-end">
-            <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
-                Create Task <i class="fa fa-plus" style="margin-left: 5px;"></i>
-            </button>
-        </div>            
+        <div class="d-flex justify-content-between mb-3" style="padding-top: 40px;">
+            <div class="dropdown" style="padding-left: 20px;">
+                <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    Filter
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    <li><a class="dropdown-item" onClick="changeFilterHeader('High Urgent Task')" onClick="filterUrgentTask(1)">High Urgent Task</a></li>
+                    <li><a class="dropdown-item" onClick="changeFilterHeader('Low Urgent Task')" onClick="filterUrgentTask(0)">Low Urgent Task</a></li>
+                    <li><a class="dropdown-item" onClick="changeFilterHeader('Completed Task')" onClick="filterCompletedTask(1)">Completed Task</a></li>
+                    <li><a class="dropdown-item" onClick="changeFilterHeader('Not Completed Task')" onClick="filterUrgentTask(0)">Not Completed Task</a></li>
+                </ul>
+            </div>
+            <div style="padding-left:20px;">
+                <button type="button" class="btn btn-lg btn-secondary">Sort</button>
+            </div>
+            <div class="ml-auto">
+                <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
+                    Create Task <i class="fa fa-plus" style="margin-left: 5px;"></i>
+                </button>
+            </div>
+        </div>
         <div id="task"></div>
     </div>
+    
+    
 </div>
 
 {{-- Task Modal --}}
@@ -172,6 +191,276 @@ parent_id
     let users = [];
     let current_users = [];
     let parentID = "default";
+    function changeFilterHeader(header) {
+        document.getElementById("dropdownMenuButton1").innerHTML = header;
+        if(header==='High Urgent Task'){
+            filterUrgentTask(1);
+        }
+        else if(header==='Low Urgent Task'){
+            filterUrgentTask(0);
+        }
+        else if(header==='Completed Task'){
+            filterCompletedTask(1);
+        }
+        else{
+            filterCompletedTask(0);
+        }
+    }
+    
+    function filterUrgentTask(urgent){
+        let resp = $.ajax({
+            type: 'GET',
+            url: '/task_subtask_user'
+        });
+        resp.done(function(resp){
+            let serial_no = 1; 
+            let html = "";
+            for(let index=0;index<resp.task.length;index++){
+                $task = resp.task[index];
+                let flag = false;
+                if($task.sub_tasks.length!==0){
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        for (let assignesID in $sub_task.assignes) {
+                            if(current_users.indexOf($sub_task.assignes[assignesID].user_id)!==-1){
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if(flag) break;
+                    }
+                }
+                
+                else{
+                    for (let assignesID in $task.assignes) {
+                        if(current_users.indexOf($task.assignes[assignesID].user_id)!==-1){
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if((!flag && current_users.length>0) || $task.urgency !== urgent) continue;
+                html += `
+                <div class="card-separator" style="padding-top:40px;"></div>
+                <div class='card'>
+                    <div class="card-header">
+                        <div class = "row">
+                            <div style="cursor: pointer;" class="col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"` : `onclick="window.location.href='/parent-task/${$task.id}'"`}>
+                                <p class="task-title"> ${serial_no}. ${$task.title}
+                                ${
+                                    $task.status == 0
+                                        ? '<span class="badge badge-danger">Not Completed</span>'
+                                        : '<span class="badge badge-success">Completed</span>'
+                                }
+                                </p>
+                            </div>
+                            <div class = "col-12 col-sm-4">
+                                <div class="d-flex flex-row-reverse">
+                `;
+
+
+                if ($task.assignes !== undefined && $task.sub_tasks.length===0) {
+                    for (let assignesID in $task.assignes) {
+                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $task.assignes[assignesID].profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';
+                    }
+                }
+                
+                html += `<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#createSubTaskModal" onclick="assignParentId(${$task.id})">
+                            <i class="fa fa-angle-double-left" style="margin-left: 5px;"></i>
+                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+            
+
+                // subtask
+                if($task.sub_tasks.length>0){
+                    html += `<div class="card-body"><div class="card-separator" style="padding-top:15px;"></div>
+                                <div class='card'>
+                                    <div class="card-header">`;
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        html += `
+                                        <div class = "row" style="cursor: pointer;" onclick="window.location.href='/task/${$sub_task.id}'">
+                                            <div class = "col-12 col-sm-8">
+                                                <p class="task-title"> ${sub_task_id+1}. ${$sub_task.title}
+                                                    ${
+                                                        $sub_task.status == 0
+                                                            ? '<span class="badge badge-danger">Not Completed</span>'
+                                                            : '<span class="badge badge-success">Completed</span>'
+                                                    }    
+                                                </p>
+                                            </div>
+                                            <div class = "col-12 col-sm-4">
+                                                <div class="d-flex flex-row-reverse">
+                                `;
+
+                            if($sub_task.assignes!==undefined){
+                                let haveAssignes = false;
+                                for(let assignesID in $sub_task.assignes){
+                                    haveAssignes = true;
+                                    break;
+                                }
+                                if(haveAssignes){
+                                    for(let assignesID in $sub_task.assignes){
+                                        $assigne = $sub_task.assignes[assignesID];
+                                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $assigne.profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';   
+                                    }
+                                }
+                            }
+
+                            html += `           </div>
+                                            </div>
+                                        </div>
+                                        `;
+            
+                    }
+                    html+=` </div>
+                        </div>
+                    </div>`;
+                        
+                }
+                html+='</div>';
+                serial_no++;
+            }
+            if(html==="") 
+                html = `<div class="card-separator" style="padding-top:40px;"></div>
+                        <h3>No tasks available...!</h3>`;
+            document.getElementById("task").innerHTML = html;
+        });
+        resp.fail(function(resp){
+            html += "No tasks";
+            document.getElementById("task").innerHTML = html;
+        })
+    }
+    function filterCompletedTask(completed){
+        let resp = $.ajax({
+            type: 'GET',
+            url: '/task_subtask_user'
+        });
+        resp.done(function(resp){
+            let serial_no = 1; 
+            let html = "";
+            for(let index=0;index<resp.task.length;index++){
+                $task = resp.task[index];
+                let flag = false;
+                if($task.sub_tasks.length!==0){
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        for (let assignesID in $sub_task.assignes) {
+                            if(current_users.indexOf($sub_task.assignes[assignesID].user_id)!==-1){
+                                flag = true;
+                                break;
+                            }
+                        }
+                        if(flag) break;
+                    }
+                }
+                
+                else{
+                    for (let assignesID in $task.assignes) {
+                        if(current_users.indexOf($task.assignes[assignesID].user_id)!==-1){
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if((!flag && current_users.length>0) || $task.status !== completed) continue;
+                html += `
+                <div class="card-separator" style="padding-top:40px;"></div>
+                <div class='card'>
+                    <div class="card-header">
+                        <div class = "row">
+                            <div style="cursor: pointer;" class="col-12 col-sm-8" ${$task.sub_tasks.length == 0 ? `onclick="window.location.href='/task/${$task.id}'"` : `onclick="window.location.href='/parent-task/${$task.id}'"`}>
+                                <p class="task-title"> ${serial_no}. ${$task.title}
+                                ${
+                                    $task.status == 0
+                                        ? '<span class="badge badge-danger">Not Completed</span>'
+                                        : '<span class="badge badge-success">Completed</span>'
+                                }
+                                </p>
+                            </div>
+                            <div class = "col-12 col-sm-4">
+                                <div class="d-flex flex-row-reverse">
+                `;
+
+
+                if ($task.assignes !== undefined && $task.sub_tasks.length===0) {
+                    for (let assignesID in $task.assignes) {
+                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $task.assignes[assignesID].profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';
+                    }
+                }
+                
+                html += `<button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#createSubTaskModal" onclick="assignParentId(${$task.id})">
+                            <i class="fa fa-angle-double-left" style="margin-left: 5px;"></i>
+                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+            
+
+                // subtask
+                if($task.sub_tasks.length>0){
+                    html += `<div class="card-body"><div class="card-separator" style="padding-top:15px;"></div>
+                                <div class='card'>
+                                    <div class="card-header">`;
+                    for(let sub_task_id = 0;sub_task_id<$task.sub_tasks.length;sub_task_id++){
+                        $sub_task = $task.sub_tasks[sub_task_id];
+                        html += `
+                                        <div class = "row" style="cursor: pointer;" onclick="window.location.href='/task/${$sub_task.id}'">
+                                            <div class = "col-12 col-sm-8">
+                                                <p class="task-title"> ${sub_task_id+1}. ${$sub_task.title}
+                                                    ${
+                                                        $sub_task.status == 0
+                                                            ? '<span class="badge badge-danger">Not Completed</span>'
+                                                            : '<span class="badge badge-success">Completed</span>'
+                                                    }    
+                                                </p>
+                                            </div>
+                                            <div class = "col-12 col-sm-4">
+                                                <div class="d-flex flex-row-reverse">
+                                `;
+
+                            if($sub_task.assignes!==undefined){
+                                let haveAssignes = false;
+                                for(let assignesID in $sub_task.assignes){
+                                    haveAssignes = true;
+                                    break;
+                                }
+                                if(haveAssignes){
+                                    for(let assignesID in $sub_task.assignes){
+                                        $assigne = $sub_task.assignes[assignesID];
+                                        html += '<img src="' + "{{ asset('storage/profile/') }}" + '/' + $assigne.profile_picture + '" alt="Profile Picture" class="rounded-circle" width="30" style="margin-left: 5px;">';   
+                                    }
+                                }
+                            }
+
+                            html += `           </div>
+                                            </div>
+                                        </div>
+                                        `;
+            
+                    }
+                    html+=` </div>
+                        </div>
+                    </div>`;
+                        
+                }
+                html+='</div>';
+                serial_no++;
+            }
+            if(html==="") 
+                html = `<div class="card-separator" style="padding-top:40px;"></div>
+                        <h3>No tasks available...!</h3>`;
+            document.getElementById("task").innerHTML = html;
+        });
+        resp.fail(function(resp){
+            html += "No tasks";
+            document.getElementById("task").innerHTML = html;
+        })
+    }
     function modifyTheUserAndCurrentUserArray(user_id){
         if (current_users.indexOf(user_id) !== -1) {
             const index = current_users.indexOf(user_id);
@@ -182,6 +471,7 @@ parent_id
         getUserTask();
     }
     function removeAllUserFromCurrentUser(){
+        document.getElementById("dropdownMenuButton1").innerHTML = "Filter";
         current_users.length = 0;
         getUserTask();
     }

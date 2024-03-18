@@ -1,11 +1,6 @@
 
-tasks
-4. filter : by urgency, time : 18th
-
-1. pagination : 18th
-2. add user analytical row when user created a profile
-
-filter : compelted, not_completed, over_due task
+1. filter : by urgency, time : 18th
+2. pagination : 18th
 
 #MODEL 
     #INTERACTION WITH DB
