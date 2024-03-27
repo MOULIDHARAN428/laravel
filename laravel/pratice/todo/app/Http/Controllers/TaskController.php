@@ -219,6 +219,18 @@ class TaskController extends Controller
     }
 
     public function importExcel(Request $request){
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:xlsx,xls|max:2048', // Adjust file validation rules as needed
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json([
+                "ok" => false,
+                "message"=>"upload excel file formate under 2MB of size!"
+            ],422);
+        }
+
         $file = $request->file('file');
         Excel::import(new UploadDataFromExcel,$file);
         return response()->json([
