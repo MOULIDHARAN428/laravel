@@ -44,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/sort_by_time','TaskController@sortByTime');
 
+    Route::post('/import_excel','TaskController@importExcel');
+
 });
 // routes for getting the data
 Route::prefix('tasks')->group(function () {

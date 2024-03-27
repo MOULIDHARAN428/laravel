@@ -6,6 +6,7 @@ use App\Http\Resources\TaskMappingResponseResource;
 use App\Http\Resources\TaskResponseResource;
 use App\Http\Resources\TaskResponseResourceTemp;
 use App\Http\Resources\TaskResponseWithAssignesResource;
+use App\Imports\UploadDataFromExcel;
 use App\Jobs\SendTaskDeleteEmail;
 use App\Task;
 use App\TaskMapping;
@@ -17,6 +18,7 @@ use Illuminate\Validation\Rule;
 use App\Traits\sendMailTrait;
 use App\UserTaskAnalytic;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TaskController extends Controller
 {
@@ -214,6 +216,15 @@ class TaskController extends Controller
             'ok' => true,
             'task' => TaskResponseWithAssignesResource::make($task_map)
         ], 200);
+    }
+
+    public function importExcel(Request $request){
+        $file = $request->file('file');
+        Excel::import(new UploadDataFromExcel,$file);
+        return response()->json([
+            "ok" => true,
+            "message"=>"uploaded successfully"
+        ],200);
     }
 
     public function editTask(Request $request,$task_id){
