@@ -25,6 +25,11 @@
                     Sort
                 </button>
             </div>
+            <div style="padding-left:20px;">
+                <button type="button" class="btn btn-lg btn-secondary" onclick="removeAllUserFromCurrentUser()">
+                    Reset
+                </button>
+            </div>
             <div class="ml-auto">
                 <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
                     Create Task <i class="fa fa-plus" style="margin-left: 5px;"></i>

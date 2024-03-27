@@ -27,7 +27,7 @@
   </div>
 </div>
 
-<!-- Modal : Task Delete-->
+<!-- Modal : Task Completed-->
 <div class="modal fade" id="taskCompleteModal" tabindex="-1" role="dialog" aria-labelledby="taskCompleteModal" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -37,7 +37,27 @@
           </button>
         </div>
         <div class="modal-body">
-            Need to change the status of the task?
+            Need to change the status of the task to completed?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmCompleteBtn">Change</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Modal : Task Redo-->
+<div class="modal fade" id="taskRedoModal" tabindex="-1" role="dialog" aria-labelledby="taskRedoModal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            Need to change the status of the task to not-completed?
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -129,9 +149,16 @@
               <div class='card'>
                 <div class="card-header d-flex justify-content-between align-items-center">
                         <p class="task-title">${$task['task_title']}</p>
-                        <button type="button" class="btn ${$task['status'] == 0 ? 'btn-success' : 'btn-danger'}" data-toggle="modal" data-target="#taskCompleteModal" onclick="assignTaskMapID('${$task['id']}','${$task['status']}')">
-                            ${$task['status'] == 0 ? 'Completed' : 'Redo task'}
-                        </button>
+                        
+                        ${$task['status']==0 ?
+                            `<button type="button" class="btn btn-success" data-toggle="modal" data-target="#taskCompleteModal" onclick="assignTaskMapID('${$task['id']}','${$task['status']}')">
+                                Mark as Completed
+                            </button>`
+                        :
+                           `<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#taskRedoModal" onclick="assignTaskMapID('${$task['id']}','${$task['status']}')">
+                                Redo task
+                            </button>`
+                        }
                     </div>
                   <div class="card-body">
                       <div class="container task">

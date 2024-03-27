@@ -596,7 +596,6 @@
                                         $task.time_completed ?  $task.time_completed : "Not Completed"
                                     }</p>
                                     <p><strong>Due Time:</strong> ${$task.due_time}</p>
-                                    <p><strong>Parent ID:</strong> ${$task.parent_id ? $task.parent_id : "Null"}</p>
                                 </div>
                             </div>
                         </div>`;
