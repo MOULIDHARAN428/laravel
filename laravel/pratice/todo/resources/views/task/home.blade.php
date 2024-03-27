@@ -227,6 +227,7 @@ parent_id
     let users = [];
     let current_users = [];
     let parentID = "default";
+    let current_page = 1;
     function changeFilterHeader(header) {
         document.getElementById("dropdownMenuButton1").innerHTML = header;
         if(header==='High Urgent Task'){
@@ -417,11 +418,12 @@ parent_id
     function filterUrgentTask(urgent){
         let resp = $.ajax({
             type: 'GET',
-            url: '/task_subtask_user'
+            url: '/task_subtask_user?page='+current_page
         });
         resp.done(function(resp){
             let serial_no = 1; 
             let html = "";
+            // console.log(resp);
             for(let index=0;index<resp.task.length;index++){
                 $task = resp.task[index];
                 let flag = false;
@@ -531,9 +533,15 @@ parent_id
                 html+='</div>';
                 serial_no++;
             }
-            if(html==="") 
+            if(html!==""){
+                html += `<div class="row"> <div class="col-12 col-sm-5"></div>`;
+                html += `<div class="col-12 col-sm-6 pagination-panel" >`+resp['pagination']+`</div>`;
+                html += `</div>`;
+            }
+            else{
                 html = `<div class="card-separator" style="padding-top:40px;"></div>
                         <h3>No tasks available...!</h3>`;
+            }
             document.getElementById("task").innerHTML = html;
         });
         resp.fail(function(resp){
@@ -544,7 +552,7 @@ parent_id
     function filterCompletedTask(completed){
         let resp = $.ajax({
             type: 'GET',
-            url: '/task_subtask_user'
+            url: '/task_subtask_user?page='+current_page
         });
         resp.done(function(resp){
             let serial_no = 1; 
@@ -658,9 +666,15 @@ parent_id
                 html+='</div>';
                 serial_no++;
             }
-            if(html==="") 
+            if(html!==""){
+                html += `<div class="row"> <div class="col-12 col-sm-5"></div>`;
+                html += `<div class="col-12 col-sm-6 pagination-panel" >`+resp['pagination']+`</div>`;
+                html += `</div>`;
+            }
+            else{
                 html = `<div class="card-separator" style="padding-top:40px;"></div>
                         <h3>No tasks available...!</h3>`;
+            }
             document.getElementById("task").innerHTML = html;
         });
         resp.fail(function(resp){
@@ -803,9 +817,10 @@ parent_id
 
         let resp = $.ajax({
             type: 'GET',
-            url: '/task_subtask_user'
+            url: '/task_subtask_user?page='+current_page
         });
         resp.done(function(resp){
+            // console.log(resp);
             let serial_no = 1; 
             let html = "";
             for(let index=0;index<resp.task.length;index++){
@@ -921,9 +936,16 @@ parent_id
                 html+='</div>';
                 serial_no++;
             }
-            if(html==="") 
+            
+            if(html!==""){
+                html += `<div class="row"> <div class="col-12 col-sm-5"></div>`;
+                html += `<div class="col-12 col-sm-6 pagination-panel" >`+resp['pagination']+`</div>`;
+                html += `</div>`;
+            }
+            else{
                 html = `<div class="card-separator" style="padding-top:40px;"></div>
                         <h3>No tasks available...!</h3>`;
+            }
             document.getElementById("task").innerHTML = html;
         });
         resp.fail(function(resp){
@@ -957,6 +979,22 @@ parent_id
             html += "No users";
             document.getElementById("user").innerHTML = html;
         })
+    }
+
+    document.addEventListener('click', function(event) {
+    if (event.target.matches('.pagination a.page-link')) {
+            event.preventDefault();
+            const href = event.target.getAttribute('href');
+            const urlParams = new URLSearchParams(href.split('?')[1]);
+            const page = urlParams.get('page');
+            handlePagination(page);
+        }
+    });
+
+    function handlePagination(page) {
+        // changing the current page to the page user had been clicked
+        current_page = page;
+        getUserTask();
     }
 
     $(document).ready(function() {

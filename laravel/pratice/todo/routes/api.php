@@ -45,6 +45,7 @@ Route::post('/reset-password','Auth\ResetPasswordController@resetPasswordPasspor
 Route::post('/sort_by_time','TaskController@sortByTime');
 // Route::get('/profile/{user_id}','TaskController@getUserAnalytics');
 
+Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
 
 Route::prefix('tasks')->group(function () {
     // GET

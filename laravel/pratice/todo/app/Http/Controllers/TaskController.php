@@ -69,7 +69,8 @@ class TaskController extends Controller
         $task = Task::getTasksWithSubTasks();
         return response()->json([
             'ok' => true,
-            'task' => $task
+            'task' => $task['tasks'],
+            'pagination' => $task['pagination']
         ], 200);
     }
 

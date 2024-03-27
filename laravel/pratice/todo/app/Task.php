@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\TaskMapping;
@@ -15,48 +16,56 @@ class Task extends Model
     }
 
     // Relationship: One-to-Many (Child Tasks)
-    public function childTasks()
+    public function subTasks()
     {
-        return $this->hasMany(Task::class, 'id', 'parent_id');
+        return $this->hasMany(Task::class, 'parent_id', 'id');
     }
     
     // Relationship: Many-to-One (Parent Task)
     public function parentTask()
     {
-        return $this->belongsTo(Task::class, 'parent_id', 'id');
+        return $this->belongsTo(Task::class, 'id', 'parent_id');
     }
-    public static function getTasksWithSubTasks(){
-        $tasks = self::all();
-        $task_with_subtask = [];
-
-        foreach ($tasks as $t) {
-            $task =  $t->toArray();
-            $formate_time = new Task();
-            
-            //formate time
-            if(isset($task['time_completed'])){
-                $task['time_completed'] = $formate_time->formatTime($task['time_completed']);
-            }if(isset($task['due_time'])){
-                $task['due_time'] = $formate_time->formatTime($task['due_time']);
-            }
-
-            //putting subtasks into task
-            if (!isset($task_with_subtask[$task['parent_id']])) {
-                $task['assignes'] = TaskMapping::getAssignes($task['id']);
-                $task_with_subtask[$task['id']] = $task;
-                $task_with_subtask[$task['id']]['sub_tasks'] = [];
+    public static function getTasksWithSubTasks() {
+        // Fetch tasks with eager loaded subtasks and paginate
+        $tasks = self::with('subTasks')->paginate(6);
+        // $tasks = $tasks->reverse();  
+        $formattedTasks = [];
+        
+        foreach ($tasks as $task) {
+            // Format time
+            $formattedTask = $task->toArray();
+            $formattedTask['time_completed'] = $task->formatTime($task['time_completed']);
+            $formattedTask['due_time'] = $task->formatTime($task['due_time']);
+    
+            // Assignees for the main task
+            $formattedTask['assignes'] = TaskMapping::getAssignes($task['id']);
+    
+            if ($task->parent_id === null) {
+                // If the task is a parent task, add it to the formatted tasks
+                $formattedTask['sub_tasks'] = [];
+                $formattedTasks[] = $formattedTask;
             } else {
-                $task['assignes'] = TaskMapping::getAssignes($task['id']);
-                $task_with_subtask[$task['parent_id']]['sub_tasks'][] = $task;
+                // If the task is a subtask, add it to its parent task's sub_tasks array
+                $parentTaskIndex = array_search($task->parent_id, array_column($formattedTasks, 'id'));
+                if ($parentTaskIndex !== false) {
+                    $subTask = $formattedTask;
+                    // Assignees for the subtask
+                    $subTask['assignes'] = TaskMapping::getAssignes($task['id']);
+                    $formattedTasks[$parentTaskIndex]['sub_tasks'][] = $subTask;
+                }
             }
         }
 
-        // to have the latest task first
-        $task_with_subtask = array_reverse($task_with_subtask);
-
-        return $task_with_subtask;
+        $pagination = $tasks->links()->toHtml();
+        // Return both the formatted tasks and the pagination object
+        return [
+            'tasks' => $formattedTasks,
+            'pagination' => $pagination
+        ];
     }
-
+    
+    
     public static function sortByTime($data){
         $tasks = Self::whereBetween('created_at', [$data['start_time'], $data['end_time']])
                 ->get();

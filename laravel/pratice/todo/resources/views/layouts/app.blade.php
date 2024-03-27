@@ -116,6 +116,10 @@
         .card-user-analytics{
             background-color: rgb(109, 221, 208);
         }
+        .pagination-panel{
+            text-align: center;
+            padding-top: 20px;
+        }
     </style>
 </head>
 <body>
