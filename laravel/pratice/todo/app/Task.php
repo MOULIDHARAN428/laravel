@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\TaskMapping;
 use App\Traits\formatTime;
+use Illuminate\Support\Facades\Log;
 
 class Task extends Model
 {
@@ -230,4 +231,85 @@ class Task extends Model
 
         return 'Task with it\'s sub-task are deleted';
     }
+
+    public static function analyticsDayData($data){
+        $tasks = [];
+        if(isset($data['from'])){
+            $tasks = Self::where([
+                ['time_completed', '>=', $data['from']],
+                ['time_completed', '<=', $data['to']]
+            ])->get(['time_completed']);
+        }
+        else{
+            $tasks = Self::get(['time_completed']);
+        }
+        $array = [0,0,0,0,0,0,0];
+        foreach($tasks as $task){
+            if(!isset($task['time_completed'])){
+                continue;
+            }
+            $dateTime = new \DateTime($task['time_completed']);;
+            $dayOfWeekNumeric = $dateTime->format('N');
+            $array[$dayOfWeekNumeric - 1]++;
+        }
+        return $array;
+    }
+
+    public static function analyticsHourData($data){
+        $tasks = [];
+        if(isset($data['from'])){
+            $tasks = Self::where([
+                ['time_completed', '>=', $data['from']],
+                ['time_completed', '<=', $data['to']]
+            ])->get(['time_completed']);
+        }
+        else{
+            $tasks = Self::get(['time_completed']);
+        }
+        $array = [0,0,0,0,0,0,0,0,0,0,
+                  0,0,0,0,0,0,0,0,0,0,
+                  0,0,0,0];
+        
+        foreach($tasks as $task){
+            if(!isset($task['time_completed'])){
+                continue;
+            }
+            $array[date("g",strtotime($task['time_completed']))]++;
+        }
+        return $array;
+    }
+
+    public static function analyticsTaskAssignes($data){
+        $tasks = [];
+        if(isset($data['from'])){
+            $tasks = Self::where([
+                ['time_completed', '>=', $data['from']],
+                ['time_completed', '<=', $data['to']]
+            ])->get(['id','title']);
+        }
+        else{
+            $tasks = Self::get(['id','title']);
+        }
+        foreach($tasks as $task){
+            if(!isset($task['id'])){
+                continue;
+            }
+            $assignes = TaskMapping::where('task_id',$task['id'])->count();
+            $task['assignes']=$assignes;
+        }
+
+        return $tasks;
+    }
+
+    public static function analyticUserTasks(){
+        $users = User::get(['id','name']);
+        foreach($users as $user){
+            $analytics = UserTaskAnalytic::where('user_id',$user['id'])->get(['yet_to_do_task','due_task','completed_task']);
+            $user['assigned'] = $analytics[0]['yet_to_do_task'];
+            $user['due'] = $analytics[0]['due_task'];
+            $user['completed'] = $analytics[0]['completed_task'];
+        }
+        return $users;
+    }
+
 }

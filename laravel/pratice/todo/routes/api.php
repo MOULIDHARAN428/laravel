@@ -47,6 +47,13 @@ Route::post('/sort_by_time','TaskController@sortByTime');
 
 Route::get('/task_subtask_user','TaskController@getTasksWithSubTasks');
 
+
+//Testing analytical api
+Route::get('/analytics_day_data','TaskAnalytics@analyticsDayData');
+Route::get('/analytics_hour_data','TaskAnalytics@analyticsHourData');
+Route::get('/analytics_task_assignes','TaskAnalytics@analyticsTaskAssignes');
+Route::get('/analytics_user_tasks','TaskAnalytics@analyticUserTasks');
+
 Route::prefix('tasks')->group(function () {
     // GET
     Route::get('/','TaskController@getTasks'); 
