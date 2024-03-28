@@ -225,12 +225,9 @@ class TaskController extends Controller
 
         // Check if validation fails
         if ($validator->fails()) {
-            return response()->json([
-                "ok" => false,
-                "message"=>"upload excel file formate under 2MB of size!"
-            ],422);
+            return $this->appendAndSendErrorMessage($validator->errors());
         }
-
+        
         $file = $request->file('file');
         Excel::import(new UploadDataFromExcel,$file);
         return response()->json([

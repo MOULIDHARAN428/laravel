@@ -31,6 +31,9 @@
                 </button>
             </div>
             <div class="ml-auto">
+                <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#uploadTaskModal">
+                    Upload Task <i class="fa fa-plus" style="margin-right: 5px;"></i>
+                </button>
                 <button type="button" class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#createTaskModal">
                     Create Task <i class="fa fa-plus" style="margin-left: 5px;"></i>
                 </button>
@@ -117,6 +120,39 @@ parent_id
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
                 <button type="button" class="btn btn-primary" onclick="createTask()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Upload Task Modal --}}
+
+<div class="modal fade bd-example-modal-lg" id="uploadTaskModal" tabindex="-1" role="dialog" aria-labelledby="uploadTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadTaskModalLabel">Upload Task</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="uploaded-successfully" style="color : green; text-align : center;"></div>
+                <form >
+                    @csrf
+                    <div class="form-group row">
+                      <label for="inputTitle" class="col-sm-2 col-form-label">File</label>
+                      <div class="col-sm-10">
+                        <input type="file" class="form-control" id="file" placeholder="File" required>
+                        <div style="color: red" id="file_error"> </div>
+                      </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Discard</button>
+                <button type="button" class="btn btn-primary" onclick="uploadTask()">Upload</button>
             </div>
         </div>
     </div>
@@ -754,6 +790,35 @@ parent_id
 
         });
 
+    }
+    function uploadTask(){
+        var fileInput = document.getElementById('file');
+        var file = fileInput.files[0];
+        var formData = new FormData();
+        formData.append('file', file);
+
+        let resp = $.ajax({
+            type: 'POST',
+            url: '/import_excel',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: formData,
+            processData: false,
+            contentType: false,
+        });
+
+        resp.done(function(resp){
+            document.getElementById("uploaded-successfully").innerHTML = "<h5>Uploaded Task Successfully!</h5>";
+            getUserTask();
+        });
+
+        resp.fail(function(resp){
+            var response = JSON.parse(resp.responseText);
+            var errors = response.validation_errors;
+            var errorMessage = errors['file'][0];
+            document.getElementById("file_error").innerHTML = "<h5>"+errorMessage+"</h5>";
+        })
     }
     function createTask(){
         document.getElementById("title_error").innerHTML = "";
