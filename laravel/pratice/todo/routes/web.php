@@ -46,6 +46,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/import_excel','TaskController@importExcel');
 
+    Route::get('/analytics_day_data','TaskAnalytics@analyticsDayData');
+
+    Route::get('/analytics_hour_data','TaskAnalytics@analyticsHourData');
+    
+    Route::get('/analytics_task_assignes','TaskAnalytics@analyticsTaskAssignes');
+    
+    Route::get('/analytics_user_tasks','TaskAnalytics@analyticUserTasks');
+
 });
 // routes for getting the data
 Route::prefix('tasks')->group(function () {

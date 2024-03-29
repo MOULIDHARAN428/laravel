@@ -274,7 +274,7 @@ class Task extends Model
             if(!isset($task['time_completed'])){
                 continue;
             }
-            $array[date("g",strtotime($task['time_completed']))]++;
+            $array[date("G",strtotime($task['time_completed']))]++;
         }
         return $array;
     }
