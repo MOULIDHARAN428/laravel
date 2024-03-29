@@ -269,6 +269,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
+            <h5 class="modal-title" id="editUserAssignModalLabel">Delete Task</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -289,6 +290,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
+          <h5 class="modal-title" id="editUserAssignModalLabel">Delete Assigne</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -365,9 +367,13 @@
                 var baseUrl = window.location.origin;
                 window.location.href = baseUrl + "/login";
             }
+            let user_email =  $('#edit_user_email').val();
+            console.log();
+            if(user_email===""){
+                document.getElementById("error_edit_user_email_error").innerHTML = "<div>This is a mandatory field!</div>";
+            }
             var response = JSON.parse(resp.responseText);
             var errors = response.validation_errors;
-            // console.log(errors);
             for (var field in errors) {
                 var errorMessage = errors[field][0];
                 document.getElementById("error_edit_user_email_error").innerHTML = "<div>"+errorMessage+"</div>";

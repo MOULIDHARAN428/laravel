@@ -891,7 +891,7 @@ parent_id
         });
         resp.done(function(resp){
             // console.log(resp);
-            let serial_no = 1; 
+            let serial_no = ((current_page-1)*6) + 1; 
             let html = "";
             for(let index=0;index<resp.task.length;index++){
                 $task = resp.task[index];

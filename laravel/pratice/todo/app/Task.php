@@ -29,8 +29,8 @@ class Task extends Model
     }
     public static function getTasksWithSubTasks() {
         // Fetch tasks with eager loaded subtasks and paginate
-        $tasks = self::with('subTasks')->paginate(6);
-        // $tasks = $tasks->reverse();  
+        $tasks = self::with('subTasks')->whereNull('parent_id')->paginate(6);
+        $subtasks = self::with('subTasks')->whereNotNull('parent_id')->get();
         $formattedTasks = [];
         
         foreach ($tasks as $task) {
@@ -41,20 +41,24 @@ class Task extends Model
     
             // Assignees for the main task
             $formattedTask['assignes'] = TaskMapping::getAssignes($task['id']);
+            
+            // If the task is a parent task, add it to the formatted tasks
+            $formattedTask['sub_tasks'] = [];
+            $formattedTasks[] = $formattedTask;
+        }
+        foreach($subtasks as $task){
+            // Format time
+            $formattedTask = $task->toArray();
+            $formattedTask['time_completed'] = $task->formatTime($task['time_completed']);
+            $formattedTask['due_time'] = $task->formatTime($task['due_time']);
     
-            if ($task->parent_id === null) {
-                // If the task is a parent task, add it to the formatted tasks
-                $formattedTask['sub_tasks'] = [];
-                $formattedTasks[] = $formattedTask;
-            } else {
-                // If the task is a subtask, add it to its parent task's sub_tasks array
-                $parentTaskIndex = array_search($task->parent_id, array_column($formattedTasks, 'id'));
-                if ($parentTaskIndex !== false) {
-                    $subTask = $formattedTask;
-                    // Assignees for the subtask
-                    $subTask['assignes'] = TaskMapping::getAssignes($task['id']);
-                    $formattedTasks[$parentTaskIndex]['sub_tasks'][] = $subTask;
-                }
+            // Assignees for the main task
+            $formattedTask['assignes'] = TaskMapping::getAssignes($task['id']);
+            $parentTaskIndex = array_search($task->parent_id, array_column($formattedTasks, 'id'));
+            if ($parentTaskIndex !== false) {
+                $subTask = $formattedTask;
+                $subTask['assignes'] = TaskMapping::getAssignes($task['id']);
+                $formattedTasks[$parentTaskIndex]['sub_tasks'][] = $subTask;
             }
         }
 
