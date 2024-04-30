@@ -33,6 +33,9 @@ Route::get('/user', function (Request $request) {
 //     return "admin...";
 // })->middleware('admin');
 
+Route::get('/summa',function(Request $request){
+    return "Heree";
+});
 
 Route::post('/register', 'Auth\RegisterController@registerPassport'); //done
 Route::post('/login',  'Auth\LoginController@loginPassport')->name('login'); //done

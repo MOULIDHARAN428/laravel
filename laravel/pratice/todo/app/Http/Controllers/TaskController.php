@@ -26,8 +26,9 @@ class TaskController extends Controller
     //CRUD
 
     public function getTasks(){
+
         $tasks = Task::getTasks();
-        
+
         return response()->json([
             'ok' => true,
             'task' => count($tasks) > 0 ? TaskResponseWithAssignesResource::collection($tasks) : "No task"
